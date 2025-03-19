@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,36 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import { useSearch } from "@/hooks/use-search";
+import { useLocation } from "react-router-dom";
 
 const Courses = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const location = useLocation();
+  
+  // Parse the URL query parameters
+  const getInitialSearchQuery = () => {
+    const searchParams = new URLSearchParams(location.search);
+    return searchParams.get("search") || "";
+  };
+  
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
+  
+  // Initialize the search hook with the query parameter
+  const { searchQuery, setSearchQuery, handleSearch, handleKeyDown } = useSearch({
+    onSearch: (query) => {
+      console.log("Searching for:", query);
+      // The filtering is already handled by filterCourses
+    }
+  });
+  
+  // Update search query when URL changes
+  useEffect(() => {
+    const initialQuery = getInitialSearchQuery();
+    if (initialQuery) {
+      setSearchQuery(initialQuery);
+    }
+  }, [location.search]);
 
   const categories = [
     "Machine Learning",
@@ -389,7 +414,7 @@ const Courses = () => {
           {/* Main content */}
           <div className="flex-1">
             <div className="mb-6">
-              <div className="relative">
+              <form onSubmit={handleSearch} className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   type="text"
@@ -397,8 +422,9 @@ const Courses = () => {
                   className="pl-10 py-5 bg-white dark:bg-gray-900"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
                 />
-              </div>
+              </form>
             </div>
 
             <Tabs defaultValue="all" className="w-full">

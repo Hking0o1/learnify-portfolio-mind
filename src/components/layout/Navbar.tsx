@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -22,12 +23,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSearch } from "@/hooks/use-search";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
+  const { searchQuery, setSearchQuery, handleSearch, handleKeyDown } = useSearch({
+    redirectToCoursesPage: true
+  });
 
   const toggleDarkMode = () => {
     document.documentElement.classList.toggle("dark");
@@ -79,14 +84,17 @@ export function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <div className="relative">
+            <form onSubmit={handleSearch} className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <input
                 type="text"
                 placeholder="Search..."
                 className="pl-10 pr-4 py-2 text-sm bg-gray-100 dark:bg-gray-800 rounded-full w-64 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-gray-700 transition-all duration-200"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
               />
-            </div>
+            </form>
 
             <Button
               variant="ghost"
