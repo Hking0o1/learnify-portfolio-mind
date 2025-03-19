@@ -1,5 +1,5 @@
-
 import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,12 +13,10 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { useSearch } from "@/hooks/use-search";
-import { useLocation } from "react-router-dom";
 
 const Courses = () => {
   const location = useLocation();
   
-  // Parse the URL query parameters
   const getInitialSearchQuery = () => {
     const searchParams = new URLSearchParams(location.search);
     return searchParams.get("search") || "";
@@ -27,15 +25,12 @@ const Courses = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
   
-  // Initialize the search hook with the query parameter
   const { searchQuery, setSearchQuery, handleSearch, handleKeyDown } = useSearch({
     onSearch: (query) => {
       console.log("Searching for:", query);
-      // The filtering is already handled by filterCourses
     }
   });
   
-  // Update search query when URL changes
   useEffect(() => {
     const initialQuery = getInitialSearchQuery();
     if (initialQuery) {
@@ -177,7 +172,6 @@ const Courses = () => {
     },
   ];
 
-  // Filter courses based on search query and selected filters
   const filterCourses = (courses: typeof allCourses) => {
     return courses.filter((course) => {
       const matchesSearch =
@@ -205,7 +199,6 @@ const Courses = () => {
     .filter((course) => !course.enrolled)
     .sort((a, b) => b.popularity - a.popularity);
 
-  // Animation variants
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -292,15 +285,17 @@ const Courses = () => {
                 )}
               </CardContent>
               <CardFooter className="pt-0 px-6 pb-6">
-                <Button
-                  className={`w-full ${
-                    course.enrolled
-                      ? "bg-blue-600 hover:bg-blue-700"
-                      : "bg-blue-600 hover:bg-blue-700"
-                  }`}
-                >
-                  {course.enrolled ? "Continue Learning" : "Enroll Now"}
-                </Button>
+                <Link to={`/courses/${course.id}`} className="w-full">
+                  <Button
+                    className={`w-full ${
+                      course.enrolled
+                        ? "bg-blue-600 hover:bg-blue-700"
+                        : "bg-blue-600 hover:bg-blue-700"
+                    }`}
+                  >
+                    {course.enrolled ? "Continue Learning" : "Enroll Now"}
+                  </Button>
+                </Link>
               </CardFooter>
             </Card>
           </motion.div>
@@ -338,7 +333,6 @@ const Courses = () => {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Filters sidebar */}
           <Card className="lg:w-64 shrink-0 border-none shadow-md">
             <CardHeader>
               <CardTitle className="text-lg flex items-center">
@@ -411,7 +405,6 @@ const Courses = () => {
             </CardContent>
           </Card>
 
-          {/* Main content */}
           <div className="flex-1">
             <div className="mb-6">
               <form onSubmit={handleSearch} className="relative">

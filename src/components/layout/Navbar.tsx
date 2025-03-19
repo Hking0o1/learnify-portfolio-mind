@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import {
   Sun,
   BookOpen,
   LayoutDashboard,
-  FileAnalytics,
+  LineChart,
   Briefcase,
   Shield,
   GraduationCap,
@@ -48,7 +49,7 @@ export function Navbar() {
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Courses", href: "/courses", icon: BookOpen },
     { name: "Portfolio", href: "/portfolio", icon: Briefcase },
-    { name: "Analytics", href: "/analytics", icon: FileAnalytics },
+    { name: "Analytics", href: "/analytics", icon: LineChart },
     { name: "Instructor", href: "/instructor", icon: GraduationCap },
     { name: "Admin", href: "/admin", icon: Shield },
   ];

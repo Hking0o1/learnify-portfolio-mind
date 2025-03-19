@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Courses from "./pages/Courses";
+import CourseDetails from "./pages/CourseDetails";
 import Portfolio from "./pages/Portfolio";
 import Analytics from "./pages/Analytics";
 import Admin from "./pages/Admin";
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/courses" element={<Courses />} />
+            <Route path="/courses/:courseId" element={<CourseDetails />} />
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/admin" element={<Admin />} />
