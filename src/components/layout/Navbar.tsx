@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,12 @@ import {
   Settings,
   Moon,
   Sun,
+  BookOpen,
+  LayoutDashboard,
+  FileAnalytics,
+  Briefcase,
+  Shield,
+  GraduationCap,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -40,10 +45,12 @@ export function Navbar() {
   };
 
   const navigation = [
-    { name: "Dashboard", href: "/dashboard" },
-    { name: "Courses", href: "/courses" },
-    { name: "Portfolio", href: "/portfolio" },
-    { name: "Analytics", href: "/analytics" },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Courses", href: "/courses", icon: BookOpen },
+    { name: "Portfolio", href: "/portfolio", icon: Briefcase },
+    { name: "Analytics", href: "/analytics", icon: FileAnalytics },
+    { name: "Instructor", href: "/instructor", icon: GraduationCap },
+    { name: "Admin", href: "/admin", icon: Shield },
   ];
 
   return (
@@ -61,7 +68,6 @@ export function Navbar() {
             </Link>
           </div>
 
-          {/* Desktop navigation */}
           <div className="hidden md:flex items-center justify-center space-x-8">
             {navigation.map((item) => (
               <Link
@@ -168,7 +174,6 @@ export function Navbar() {
             </DropdownMenu>
           </div>
 
-          {/* Mobile menu button */}
           <div className="flex md:hidden items-center space-x-4">
             <Button variant="ghost" size="icon" onClick={toggleDarkMode}>
               {isDarkMode ? (
@@ -192,7 +197,6 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu */}
       {isOpen && isMobile && (
         <div className="md:hidden h-screen bg-white dark:bg-gray-900 fixed inset-0 z-40 animate-fade-in pt-16">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
@@ -200,13 +204,14 @@ export function Navbar() {
               <Link
                 key={item.name}
                 to={item.href}
-                className={`block px-3 py-4 rounded-md text-base font-medium transition-all duration-200 ${
+                className={`flex items-center gap-2 px-3 py-4 rounded-md text-base font-medium transition-all duration-200 ${
                   location.pathname === item.href
                     ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                 }`}
                 onClick={() => setIsOpen(false)}
               >
+                <item.icon className="h-5 w-5" />
                 {item.name}
               </Link>
             ))}

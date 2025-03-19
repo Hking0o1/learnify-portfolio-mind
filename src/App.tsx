@@ -10,6 +10,8 @@ import Dashboard from "./pages/Dashboard";
 import Courses from "./pages/Courses";
 import Portfolio from "./pages/Portfolio";
 import Analytics from "./pages/Analytics";
+import Admin from "./pages/Admin";
+import Instructor from "./pages/Instructor";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +29,8 @@ const App = () => (
             <Route path="/courses" element={<Courses />} />
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/instructor" element={<Instructor />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AnimatePresence>
