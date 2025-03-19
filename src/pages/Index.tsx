@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { ArrowRight, BarChart3, BookOpen, Brain, Layers } from "lucide-react";
@@ -48,7 +47,7 @@ const Index = () => {
               transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
             >
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-2xl">
-                LearniVerse combines advanced machine learning with comprehensive
+                Pragati combines advanced machine learning with comprehensive
                 learning management to deliver a tailored educational experience
                 that adapts to your unique learning style and goals.
               </p>

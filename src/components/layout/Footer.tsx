@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 
 export function Footer() {
@@ -9,10 +8,10 @@ export function Footer() {
           <div className="col-span-1 md:col-span-1">
             <Link to="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-semibold text-sm">L</span>
+                <span className="text-white font-semibold text-sm">P</span>
               </div>
               <h1 className="text-xl font-medium bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400">
-                LearniVerse
+                Pragati
               </h1>
             </Link>
             <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
@@ -134,7 +133,7 @@ export function Footer() {
 
         <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-            &copy; {new Date().getFullYear()} LearniVerse. All rights reserved.
+            &copy; {new Date().getFullYear()} Pragati. All rights reserved.
           </p>
         </div>
       </div>

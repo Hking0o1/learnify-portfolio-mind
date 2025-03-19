@@ -1,4 +1,3 @@
-
 import { Layout } from "@/components/layout/Layout";
 import {
   Card,
@@ -437,7 +436,7 @@ const Analytics = () => {
                       dataKey={(entry) => dayValue(entry.day)}
                       name="Day"
                       domain={[1, 7]}
-                      tickFormatter={(value) => dayOrder[value - 1]}
+                      tickFormatter={(value) => dayOrder[Number(value) - 1]}
                     />
                     <ZAxis
                       type="number"
@@ -449,7 +448,7 @@ const Analytics = () => {
                       cursor={{ strokeDasharray: "3 3" }}
                       formatter={(value, name, props) => {
                         if (name === "Time of Day") return `${value}:00`;
-                        if (name === "Day") return dayOrder[value - 1];
+                        if (name === "Day") return dayOrder[Number(value) - 1];
                         if (name === "Intensity") return `${props.payload.intensity}%`;
                         return value;
                       }}
