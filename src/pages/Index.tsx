@@ -1,11 +1,16 @@
+
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { ArrowRight, BarChart3, BookOpen, Brain, Layers } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Navbar } from "@/components/layout/Navbar";
+import { SignedIn, SignedOut, SignInButton, SignUpButton } from "@clerk/clerk-react";
 
 const Index = () => {
   return (
     <div className="flex flex-col min-h-screen">
+      <Navbar />
+      
       {/* Hero Section */}
       <section className="relative py-20 overflow-hidden">
         <div className="absolute inset-0 z-0">
@@ -59,15 +64,29 @@ const Index = () => {
               transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
               className="flex flex-col sm:flex-row gap-4"
             >
-              <Link to="/dashboard">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 rounded-full text-lg transition-all duration-300 transform hover:scale-105">
-                  Get Started
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Button variant="outline" className="px-8 py-6 rounded-full text-lg border-2 transition-all duration-300 transform hover:scale-105">
-                Learn More
-              </Button>
+              <SignedIn>
+                <Link to="/dashboard">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 rounded-full text-lg transition-all duration-300 transform hover:scale-105">
+                    Go to Dashboard
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+              </SignedIn>
+              
+              <SignedOut>
+                <SignUpButton mode="modal">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 rounded-full text-lg transition-all duration-300 transform hover:scale-105">
+                    Get Started
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </SignUpButton>
+                
+                <SignInButton mode="modal">
+                  <Button variant="outline" className="px-8 py-6 rounded-full text-lg border-2 transition-all duration-300 transform hover:scale-105">
+                    Sign In
+                  </Button>
+                </SignInButton>
+              </SignedOut>
             </motion.div>
           </div>
 
@@ -163,12 +182,24 @@ const Index = () => {
               Join thousands of learners who have accelerated their educational
               journey with our AI-powered platform.
             </p>
-            <Link to="/dashboard">
-              <Button className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-6 rounded-full text-lg font-medium transition-all duration-300 transform hover:scale-105">
-                Start Learning Now
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+            
+            <SignedIn>
+              <Link to="/dashboard">
+                <Button className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-6 rounded-full text-lg font-medium transition-all duration-300 transform hover:scale-105">
+                  Continue Learning
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </SignedIn>
+            
+            <SignedOut>
+              <SignUpButton mode="modal">
+                <Button className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-6 rounded-full text-lg font-medium transition-all duration-300 transform hover:scale-105">
+                  Start Learning Now
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </SignUpButton>
+            </SignedOut>
           </div>
         </div>
       </section>
