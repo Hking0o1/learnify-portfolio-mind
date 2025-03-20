@@ -1,45 +1,10 @@
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { SignIn } from "@clerk/clerk-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF, OrbitControls, Environment, PerspectiveCamera } from "@react-three/drei";
-import { Suspense } from "react";
+import { motion } from "framer-motion";
 import { Loader2, BookOpen, Trophy, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Vector3, Euler } from "three";
-
-// Simple 3D model component
-const Book = ({ position = [0, 0, 0], rotation = [0, 0, 0] }) => {
-  const meshRef = useRef();
-  
-  // Simple animation
-  useFrame(() => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += 0.01;
-    }
-  });
-  
-  return (
-    <group position={position as [number, number, number]} rotation={rotation as [number, number, number]}>
-      <mesh ref={meshRef}>
-        <boxGeometry args={[1.5, 0.2, 1]} />
-        <meshStandardMaterial color="#3B82F6" />
-      </mesh>
-      {/* Book pages */}
-      <mesh position={[0, 0.15, 0]}>
-        <boxGeometry args={[1.4, 0.1, 0.9]} />
-        <meshStandardMaterial color="#F9FAFB" />
-      </mesh>
-      {/* Book binding */}
-      <mesh position={[-0.7, 0.1, 0]}>
-        <boxGeometry args={[0.1, 0.22, 1]} />
-        <meshStandardMaterial color="#1E40AF" />
-      </mesh>
-    </group>
-  );
-};
 
 // Floating elements animation
 const FloatingElement = ({ children, delay = 0 }) => {
@@ -149,17 +114,8 @@ const InstructorLogin = () => {
             ))}
           </div>
 
-          <div className="mt-12 h-64 relative">
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
-              <Canvas>
-                <ambientLight intensity={0.5} />
-                <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
-                <PerspectiveCamera makeDefault position={[0, 0, 5]} />
-                <Book position={[0, 0, 0]} />
-                <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={1} />
-                <Environment preset="city" />
-              </Canvas>
-            </Suspense>
+          <div className="mt-12 flex items-center justify-center">
+            {isLoading && <Loader2 className="h-8 w-8 animate-spin" />}
           </div>
         </div>
 
