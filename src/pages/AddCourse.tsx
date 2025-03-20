@@ -12,6 +12,7 @@ import { useUserAuth } from "@/contexts/AuthContext";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { courseAPI, useAPI } from "@/services/api";
 import {
   Form,
   FormControl,
@@ -37,6 +38,8 @@ const AddCourse = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isInstructor } = useUserAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { withToast } = useAPI();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -51,19 +54,34 @@ const AddCourse = () => {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    // In a real application, this would send the data to your backend
-    console.log("Form Values:", values);
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsSubmitting(true);
     
-    toast({
-      title: "Course Created!",
-      description: "Your new course has been successfully created.",
-    });
-
-    // Navigate to instructor dashboard after successful creation
-    setTimeout(() => {
-      navigate("/instructor");
-    }, 1500);
+    try {
+      // Convert price to number for the API
+      const courseData = {
+        ...values,
+        price: parseFloat(values.price),
+      };
+      
+      // Call the API service
+      const result = await withToast(
+        () => courseAPI.createCourse(courseData),
+        "Course created successfully!",
+        "Failed to create course"
+      );
+      
+      if (result) {
+        // Navigate to instructor dashboard after successful creation
+        setTimeout(() => {
+          navigate("/instructor");
+        }, 1500);
+      }
+    } catch (error) {
+      console.error("Error creating course:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isInstructor) {
@@ -260,11 +278,11 @@ const AddCourse = () => {
                   />
 
                   <div className="flex justify-end space-x-4 pt-4">
-                    <Button type="button" variant="outline" onClick={() => form.reset()}>
+                    <Button type="button" variant="outline" onClick={() => form.reset()} disabled={isSubmitting}>
                       Reset
                     </Button>
-                    <Button type="submit">
-                      Create Course
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? "Creating..." : "Create Course"}
                     </Button>
                   </div>
                 </form>

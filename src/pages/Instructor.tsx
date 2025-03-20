@@ -1,51 +1,72 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Users, MessageSquare, FileText, Plus, Edit, Trash2 } from "lucide-react";
+import { BookOpen, Users, MessageSquare, FileText, Plus, Edit, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-
-// Mock data
-const courses = [
-  {
-    id: 1,
-    title: "Machine Learning Fundamentals",
-    students: 124,
-    rating: 4.8,
-    status: "Published",
-    lastUpdated: "2 days ago"
-  },
-  {
-    id: 2,
-    title: "Data Analysis with Python",
-    students: 89,
-    rating: 4.6,
-    status: "Published",
-    lastUpdated: "1 week ago"
-  },
-  {
-    id: 3,
-    title: "AI for Portfolio Management",
-    students: 56,
-    rating: 4.5,
-    status: "Draft",
-    lastUpdated: "3 days ago"
-  }
-];
+import { courseAPI, useAPI } from "@/services/api";
+import { useToast } from "@/hooks/use-toast";
 
 const Instructor = () => {
   const [activeTab, setActiveTab] = useState("courses");
+  const [isLoading, setIsLoading] = useState(true);
+  const [courses, setCourses] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { withToast } = useAPI();
+
+  // Fetch instructor's courses
+  useEffect(() => {
+    const fetchCourses = async () => {
+      setIsLoading(true);
+      try {
+        const data = await courseAPI.getAllCourses();
+        setCourses(data);
+      } catch (error) {
+        console.error("Failed to fetch courses:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load your courses. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, [toast]);
+
+  // Filter courses based on search query
+  const filteredCourses = searchQuery
+    ? courses.filter((course) =>
+        course.title.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : courses;
+
+  // Handle course deletion
+  const handleDeleteCourse = async (courseId) => {
+    if (window.confirm("Are you sure you want to delete this course?")) {
+      await withToast(
+        () => courseAPI.deleteCourse(courseId.toString()),
+        "Course deleted successfully",
+        "Failed to delete course"
+      );
+      
+      // Update the courses list
+      setCourses(courses.filter(course => course.id !== courseId));
+    }
+  };
 
   const stats = [
     {
       title: "Total Courses",
-      value: "12",
+      value: courses.length.toString(),
       icon: <BookOpen className="h-4 w-4 text-blue-600" />,
     },
     {
@@ -75,7 +96,7 @@ const Instructor = () => {
               Manage your courses, students, and learning materials
             </p>
           </div>
-          <Button onClick={() => {}}>
+          <Button onClick={() => navigate('/add-course')}>
             <Plus className="mr-2 h-4 w-4" />
             Create New Course
           </Button>
@@ -124,52 +145,78 @@ const Instructor = () => {
                 <div className="flex items-center space-x-2">
                   <Input 
                     placeholder="Search courses..." 
-                    className="max-w-[200px]" 
+                    className="max-w-[200px]"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="rounded-md border">
-                  <div className="grid grid-cols-6 p-4 font-medium border-b">
-                    <div className="col-span-2">Course Name</div>
-                    <div>Students</div>
-                    <div>Rating</div>
-                    <div>Status</div>
-                    <div>Actions</div>
+                {isLoading ? (
+                  <div className="flex justify-center items-center h-40">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
-                  {courses.map((course) => (
-                    <div 
-                      key={course.id} 
-                      className="grid grid-cols-6 p-4 border-b items-center hover:bg-muted/50"
-                    >
-                      <div className="col-span-2 font-medium">
-                        {course.title}
-                        <p className="text-xs text-muted-foreground">Updated {course.lastUpdated}</p>
-                      </div>
-                      <div>{course.students}</div>
-                      <div>{course.rating}</div>
-                      <div>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          course.status === "Published" 
-                            ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                            : "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
-                        }`}>
-                          {course.status}
-                        </span>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                ) : filteredCourses.length > 0 ? (
+                  <div className="rounded-md border">
+                    <div className="grid grid-cols-6 p-4 font-medium border-b">
+                      <div className="col-span-2">Course Name</div>
+                      <div>Students</div>
+                      <div>Rating</div>
+                      <div>Status</div>
+                      <div>Actions</div>
+                    </div>
+                    {filteredCourses.map((course) => (
+                      <div 
+                        key={course.id} 
+                        className="grid grid-cols-6 p-4 border-b items-center hover:bg-muted/50"
+                      >
+                        <div className="col-span-2 font-medium">
+                          {course.title}
+                          <p className="text-xs text-muted-foreground">Updated {course.lastUpdated}</p>
+                        </div>
+                        <div>{course.students}</div>
+                        <div>{course.rating}</div>
+                        <div>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            course.status === "Published" 
+                              ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                              : "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
+                          }`}>
+                            {course.status}
+                          </span>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => navigate(`/add-module/${course.id}`)}
+                              title="Edit course"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleDeleteCourse(course.id)}
+                              title="Delete course"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-10">
+                    <p className="text-muted-foreground mb-4">No courses found</p>
+                    <Button onClick={() => navigate('/add-course')}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Your First Course
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
