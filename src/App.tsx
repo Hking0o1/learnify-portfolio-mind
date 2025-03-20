@@ -22,6 +22,19 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import AddCourse from "./pages/AddCourse";
 import AddModule from "./pages/AddModule";
+import InstructorLogin from "./pages/InstructorLogin";
+import { Suspense, lazy } from "react";
+import { Loader2 } from "lucide-react";
+
+// Create a loading component
+const LoadingScreen = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="flex flex-col items-center gap-4">
+      <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <p className="text-lg font-medium text-muted-foreground">Loading...</p>
+    </div>
+  </div>
+);
 
 const queryClient = new QueryClient();
 
@@ -31,80 +44,83 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
-          <AnimatePresence mode="wait">
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/sign-in" element={<SignIn />} />
-              <Route path="/sign-up" element={<SignUp />} />
-              
-              {/* Protected routes for all authenticated users */}
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/courses" element={
-                <ProtectedRoute>
-                  <Courses />
-                </ProtectedRoute>
-              } />
-              <Route path="/courses/:courseId" element={
-                <ProtectedRoute>
-                  <CourseDetails />
-                </ProtectedRoute>
-              } />
-              <Route path="/portfolio" element={
-                <ProtectedRoute>
-                  <Portfolio />
-                </ProtectedRoute>
-              } />
-              <Route path="/analytics" element={
-                <ProtectedRoute>
-                  <Analytics />
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              } />
-              <Route path="/settings" element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              } />
-              
-              {/* Instructor & Admin only routes */}
-              <Route path="/instructor" element={
-                <ProtectedRoute allowedRoles={["instructor", "admin"]}>
-                  <Instructor />
-                </ProtectedRoute>
-              } />
-              <Route path="/add-course" element={
-                <ProtectedRoute allowedRoles={["instructor", "admin"]}>
-                  <AddCourse />
-                </ProtectedRoute>
-              } />
-              <Route path="/add-module/:courseId" element={
-                <ProtectedRoute allowedRoles={["instructor", "admin"]}>
-                  <AddModule />
-                </ProtectedRoute>
-              } />
-              
-              {/* Admin only routes */}
-              <Route path="/admin" element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <Admin />
-                </ProtectedRoute>
-              } />
-              
-              {/* 404 route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AnimatePresence>
-        </AuthProvider>
+        <Suspense fallback={<LoadingScreen />}>
+          <AuthProvider>
+            <AnimatePresence mode="wait">
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/sign-in" element={<SignIn />} />
+                <Route path="/sign-up" element={<SignUp />} />
+                <Route path="/instructor-login" element={<InstructorLogin />} />
+                
+                {/* Protected routes for all authenticated users */}
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/courses" element={
+                  <ProtectedRoute>
+                    <Courses />
+                  </ProtectedRoute>
+                } />
+                <Route path="/courses/:courseId" element={
+                  <ProtectedRoute>
+                    <CourseDetails />
+                  </ProtectedRoute>
+                } />
+                <Route path="/portfolio" element={
+                  <ProtectedRoute>
+                    <Portfolio />
+                  </ProtectedRoute>
+                } />
+                <Route path="/analytics" element={
+                  <ProtectedRoute>
+                    <Analytics />
+                  </ProtectedRoute>
+                } />
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } />
+                <Route path="/settings" element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Instructor & Admin only routes */}
+                <Route path="/instructor" element={
+                  <ProtectedRoute allowedRoles={["instructor", "admin"]}>
+                    <Instructor />
+                  </ProtectedRoute>
+                } />
+                <Route path="/add-course" element={
+                  <ProtectedRoute allowedRoles={["instructor", "admin"]}>
+                    <AddCourse />
+                  </ProtectedRoute>
+                } />
+                <Route path="/add-module/:courseId" element={
+                  <ProtectedRoute allowedRoles={["instructor", "admin"]}>
+                    <AddModule />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Admin only routes */}
+                <Route path="/admin" element={
+                  <ProtectedRoute allowedRoles={["admin"]}>
+                    <Admin />
+                  </ProtectedRoute>
+                } />
+                
+                {/* 404 route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AnimatePresence>
+          </AuthProvider>
+        </Suspense>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

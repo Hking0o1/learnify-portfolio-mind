@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +19,7 @@ import {
   Shield,
   GraduationCap,
   PlusCircle,
+  Sparkles,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -40,10 +41,13 @@ import {
   SignUpButton,
   useUser,
 } from "@clerk/clerk-react";
+import { motion } from "framer-motion";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => 
+    document.documentElement.classList.contains("dark")
+  );
   const isMobile = useIsMobile();
   const location = useLocation();
   const { searchQuery, setSearchQuery, handleSearch, handleKeyDown } = useSearch({
@@ -51,6 +55,21 @@ export function Navbar() {
   });
   const { isAdmin, isInstructor } = useUserAuth();
   const { user } = useUser();
+
+  // Effect to update isDarkMode state when system preference changes
+  useEffect(() => {
+    const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    const handleChange = (e: MediaQueryListEvent) => {
+      setIsDarkMode(e.matches);
+    };
+    
+    darkModeMediaQuery.addEventListener('change', handleChange);
+    
+    return () => {
+      darkModeMediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
 
   const toggleDarkMode = () => {
     document.documentElement.classList.toggle("dark");
@@ -74,18 +93,49 @@ export function Navbar() {
   // Combine navigation items based on user role
   const navigation = [...basicNavigation, ...roleBasedNavigation];
 
+  const themeSwitchAnimation = {
+    hidden: { rotate: -180, opacity: 0 },
+    visible: { rotate: 0, opacity: 1, transition: { duration: 0.5 } }
+  };
+
   return (
     <nav className="sticky top-0 z-50 w-full bg-white/80 dark:bg-black/20 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800 transition-all duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0 flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-semibold text-sm">P</span>
-              </div>
-              <h1 className="text-xl font-medium bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400">
+            <Link to="/" className="flex items-center space-x-2 group">
+              <motion.div 
+                className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center relative overflow-hidden"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <motion.span 
+                  className="text-white font-semibold text-sm relative z-10"
+                  initial={{ y: 0 }}
+                  whileHover={{ y: [-1, 1, -1] }}
+                  transition={{ duration: 0.5, repeat: Infinity }}
+                >
+                  P
+                </motion.span>
+                <motion.div 
+                  className="absolute inset-0 bg-blue-400 opacity-0"
+                  whileHover={{ 
+                    opacity: 0.3, 
+                    scale: 1.5,
+                    transition: { duration: 0.8 }
+                  }}
+                />
+              </motion.div>
+              <motion.h1 
+                className="text-xl font-medium bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400"
+                initial={{ opacity: 1 }}
+                whileHover={{ 
+                  scale: 1.03,
+                  transition: { duration: 0.2 }
+                }}
+              >
                 Pragati
-              </h1>
+              </motion.h1>
             </Link>
           </div>
 
@@ -151,18 +201,40 @@ export function Navbar() {
                 </span>
               </Button>
 
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleDarkMode}
-                className="transition-transform duration-200 hover:scale-110"
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={themeSwitchAnimation}
               >
-                {isDarkMode ? (
-                  <Sun className="h-5 w-5" />
-                ) : (
-                  <Moon className="h-5 w-5" />
-                )}
-              </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleDarkMode}
+                  className="transition-transform duration-200 hover:scale-110 relative overflow-hidden"
+                >
+                  <motion.div
+                    initial={{ rotate: 0 }}
+                    animate={{ rotate: isDarkMode ? 180 : 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="relative"
+                  >
+                    {isDarkMode ? (
+                      <Sun className="h-5 w-5" />
+                    ) : (
+                      <Moon className="h-5 w-5" />
+                    )}
+                  </motion.div>
+                  <span className="sr-only">Toggle theme</span>
+                  
+                  {/* Ripple effect on click */}
+                  <motion.span
+                    className="absolute inset-0 rounded-full bg-blue-400/20"
+                    initial={{ scale: 0, opacity: 0.8 }}
+                    whileTap={{ scale: 1.5, opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </Button>
+              </motion.div>
 
               <UserButton afterSignOutUrl="/" />
             </div>
@@ -170,25 +242,63 @@ export function Navbar() {
 
           <SignedOut>
             <div className="hidden md:flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleDarkMode}
-                className="transition-transform duration-200 hover:scale-110"
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={themeSwitchAnimation}
               >
-                {isDarkMode ? (
-                  <Sun className="h-5 w-5" />
-                ) : (
-                  <Moon className="h-5 w-5" />
-                )}
-              </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleDarkMode}
+                  className="transition-transform duration-200 hover:scale-110 relative overflow-hidden"
+                >
+                  <motion.div
+                    initial={{ rotate: 0 }}
+                    animate={{ rotate: isDarkMode ? 180 : 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="relative"
+                  >
+                    {isDarkMode ? (
+                      <Sun className="h-5 w-5" />
+                    ) : (
+                      <Moon className="h-5 w-5" />
+                    )}
+                  </motion.div>
+                  <span className="sr-only">Toggle theme</span>
+                  
+                  {/* Ripple effect on click */}
+                  <motion.span
+                    className="absolute inset-0 rounded-full bg-blue-400/20"
+                    initial={{ scale: 0, opacity: 0.8 }}
+                    whileTap={{ scale: 1.5, opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </Button>
+              </motion.div>
+              
+              <Link to="/instructor-login">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4" />
+                  <span>For Instructors</span>
+                </Button>
+              </Link>
               
               <SignInButton mode="modal">
                 <Button variant="outline">Sign In</Button>
               </SignInButton>
               
               <SignUpButton mode="modal">
-                <Button>Sign Up</Button>
+                <Button className="group relative overflow-hidden">
+                  <span className="relative z-10">Sign Up</span>
+                  <motion.span
+                    className="absolute inset-0 bg-blue-600 group-hover:bg-blue-700"
+                    initial={{ x: "100%" }}
+                    whileHover={{ x: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  />
+                  <Sparkles className="w-4 h-4 ml-2 relative z-10" />
+                </Button>
               </SignUpButton>
             </div>
           </SignedOut>
@@ -217,40 +327,70 @@ export function Navbar() {
       </div>
 
       {isOpen && isMobile && (
-        <div className="md:hidden h-screen bg-white dark:bg-gray-900 fixed inset-0 z-40 animate-fade-in pt-16">
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.3 }}
+          className="md:hidden h-screen bg-white dark:bg-gray-900 fixed inset-0 z-40 pt-16"
+        >
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             <SignedIn>
               {navigation.map((item) => (
-                <Link
+                <motion.div
                   key={item.name}
-                  to={item.href}
-                  className={`flex items-center gap-2 px-3 py-4 rounded-md text-base font-medium transition-all duration-200 ${
-                    location.pathname === item.href
-                      ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                  }`}
-                  onClick={() => setIsOpen(false)}
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.1 * navigation.indexOf(item) }}
                 >
-                  <item.icon className="h-5 w-5" />
-                  {item.name}
-                </Link>
+                  <Link
+                    to={item.href}
+                    className={`flex items-center gap-2 px-3 py-4 rounded-md text-base font-medium transition-all duration-200 ${
+                      location.pathname === item.href
+                        ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    }`}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    {item.name}
+                  </Link>
+                </motion.div>
               ))}
             </SignedIn>
 
             <SignedOut>
               <div className="mt-6 px-3 space-y-3">
-                <SignInButton mode="modal">
-                  <Button variant="outline" className="w-full">Sign In</Button>
-                </SignInButton>
+                <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
+                  <Link to="/instructor-login" className="block w-full">
+                    <Button variant="outline" className="w-full flex items-center justify-center gap-2">
+                      <GraduationCap className="h-4 w-4" />
+                      <span>For Instructors</span>
+                    </Button>
+                  </Link>
+                </motion.div>
                 
-                <SignUpButton mode="modal">
-                  <Button className="w-full">Sign Up</Button>
-                </SignUpButton>
+                <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}>
+                  <SignInButton mode="modal">
+                    <Button variant="outline" className="w-full">Sign In</Button>
+                  </SignInButton>
+                </motion.div>
+                
+                <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}>
+                  <SignUpButton mode="modal">
+                    <Button className="w-full">Sign Up</Button>
+                  </SignUpButton>
+                </motion.div>
               </div>
             </SignedOut>
 
             <SignedIn>
-              <div className="pt-4 pb-3 border-t border-gray-200 dark:border-gray-700">
+              <motion.div 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="pt-4 pb-3 border-t border-gray-200 dark:border-gray-700"
+              >
                 <div className="flex items-center px-5">
                   <UserButton afterSignOutUrl="/" />
                   <div className="ml-3">
@@ -272,10 +412,10 @@ export function Navbar() {
                     </span>
                   </Button>
                 </div>
-              </div>
+              </motion.div>
             </SignedIn>
           </div>
-        </div>
+        </motion.div>
       )}
     </nav>
   );
