@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { SignIn } from "@clerk/clerk-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Canvas, useFrame } from "@react-three/fiber";
@@ -8,6 +8,7 @@ import { Suspense } from "react";
 import { Loader2, BookOpen, Trophy, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Vector3, Euler } from "three";
 
 // Simple 3D model component
 const Book = ({ position = [0, 0, 0], rotation = [0, 0, 0] }) => {
@@ -21,7 +22,7 @@ const Book = ({ position = [0, 0, 0], rotation = [0, 0, 0] }) => {
   });
   
   return (
-    <group position={position} rotation={rotation}>
+    <group position={position as [number, number, number]} rotation={rotation as [number, number, number]}>
       <mesh ref={meshRef}>
         <boxGeometry args={[1.5, 0.2, 1]} />
         <meshStandardMaterial color="#3B82F6" />
