@@ -71,6 +71,27 @@ export function Navbar() {
     };
   }, []);
 
+  // Effect to close menu when clicking outside or navigating
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (isOpen && 
+          isMobile && 
+          e.target instanceof HTMLElement &&
+          !e.target.closest('.mobile-menu-container')) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleOutsideClick);
+    
+    // Close menu when route changes
+    setIsOpen(false);
+    
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+    };
+  }, [location.pathname, isMobile]);
+
   const toggleDarkMode = () => {
     document.documentElement.classList.toggle("dark");
     setIsDarkMode(!isDarkMode);
@@ -332,7 +353,7 @@ export function Navbar() {
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.3 }}
-          className="md:hidden h-screen bg-white dark:bg-gray-900 fixed inset-0 z-40 pt-16"
+          className="md:hidden h-screen bg-white dark:bg-gray-900 fixed inset-0 z-40 pt-16 mobile-menu-container"
         >
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             <SignedIn>
@@ -362,7 +383,7 @@ export function Navbar() {
             <SignedOut>
               <div className="mt-6 px-3 space-y-3">
                 <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
-                  <Link to="/instructor-login" className="block w-full">
+                  <Link to="/instructor-login" className="block w-full" onClick={() => setIsOpen(false)}>
                     <Button variant="outline" className="w-full flex items-center justify-center gap-2">
                       <GraduationCap className="h-4 w-4" />
                       <span>For Instructors</span>
@@ -372,13 +393,13 @@ export function Navbar() {
                 
                 <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}>
                   <SignInButton mode="modal">
-                    <Button variant="outline" className="w-full">Sign In</Button>
+                    <Button variant="outline" className="w-full" onClick={() => setIsOpen(false)}>Sign In</Button>
                   </SignInButton>
                 </motion.div>
                 
                 <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}>
                   <SignUpButton mode="modal">
-                    <Button className="w-full">Sign Up</Button>
+                    <Button className="w-full" onClick={() => setIsOpen(false)}>Sign Up</Button>
                   </SignUpButton>
                 </motion.div>
               </div>

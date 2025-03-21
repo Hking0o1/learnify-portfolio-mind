@@ -1,16 +1,26 @@
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
+import { useScrollAnimation, useCursorAnimation } from "@/hooks/use-scroll-animation";
 
 interface LayoutProps {
   children: ReactNode;
+  enableCustomCursor?: boolean;
 }
 
-export function Layout({ children }: LayoutProps) {
+export function Layout({ children, enableCustomCursor = false }: LayoutProps) {
   const location = useLocation();
+  
+  // Apply scroll animations
+  useScrollAnimation();
+  
+  // Apply custom cursor on index page only
+  if (enableCustomCursor) {
+    useCursorAnimation();
+  }
 
   const pageVariants = {
     initial: {
