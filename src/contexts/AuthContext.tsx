@@ -11,6 +11,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isInstructor: boolean;
   isStudent: boolean;
+  userId: string | null;  // Add userId property
   setUserRole: (role: UserRole) => void;
   checkAccess: (allowedRoles: UserRole[]) => boolean;
 }
@@ -21,6 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { isLoaded, isSignedIn, user } = useUser();
   const { getToken } = useAuth();
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [userId, setUserId] = useState<string | null>(null); // Add userId state
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -28,6 +30,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Here we're using a simplified approach with metadata
   useEffect(() => {
     if (isLoaded && isSignedIn && user) {
+      // Set userId from user object
+      setUserId(user.id);
+      
       // Check if user has a role in public metadata
       const userMetadata = user.publicMetadata;
       
@@ -37,6 +42,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Default role is student if not specified
         setUserRole("student");
       }
+    } else if (isLoaded && !isSignedIn) {
+      setUserRole(null);
+      setUserId(null);
     }
   }, [isLoaded, isSignedIn, user]);
 
@@ -50,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin: userRole === "admin",
     isInstructor: userRole === "instructor" || userRole === "admin", // Admin can do everything an instructor can
     isStudent: userRole === "student" || userRole === "instructor" || userRole === "admin", // Everyone has student access
+    userId, // Add userId to context value
     setUserRole,
     checkAccess,
   };
