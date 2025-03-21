@@ -9,13 +9,237 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      courses: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          instructor_id: string | null
+          price: number | null
+          rating: number | null
+          status: string | null
+          students: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          instructor_id?: string | null
+          price?: number | null
+          rating?: number | null
+          status?: string | null
+          students?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          instructor_id?: string | null
+          price?: number | null
+          rating?: number | null
+          status?: string | null
+          students?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      materials: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: string
+          module_id: string | null
+          position: number | null
+          title: string
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          module_id?: string | null
+          position?: number | null
+          title: string
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          module_id?: string | null
+          position?: number | null
+          title?: string
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "materials_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      modules: {
+        Row: {
+          course_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          position: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          position?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          position?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_replies: {
+        Row: {
+          created_at: string | null
+          id: string
+          instructor_id: string | null
+          reply: string
+          review_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          instructor_id?: string | null
+          reply: string
+          review_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          instructor_id?: string | null
+          reply?: string
+          review_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_replies_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          comment: string | null
+          course_id: string | null
+          created_at: string | null
+          id: string
+          rating: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          course_id?: string | null
+          created_at?: string | null
+          id?: string
+          rating?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          course_id?: string | null
+          created_at?: string | null
+          id?: string
+          rating?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      analyze_performance: {
+        Args: {
+          user_id: string
+        }
+        Returns: Json
+      }
+      get_average_rating: {
+        Args: {
+          course_id: string
+        }
+        Returns: number
+      }
+      get_course_recommendations: {
+        Args: {
+          user_id: string
+        }
+        Returns: Json
+      }
+      get_learning_path: {
+        Args: {
+          user_id: string
+          course_id: string
+        }
+        Returns: Json
+      }
+      predict_completion_time: {
+        Args: {
+          user_id: string
+          course_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
