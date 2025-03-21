@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,6 +55,7 @@ export function Navbar() {
   });
   const { isAdmin, isInstructor } = useUserAuth();
   const { user } = useUser();
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   // Effect to update isDarkMode state when system preference changes
   useEffect(() => {
@@ -74,10 +75,13 @@ export function Navbar() {
   // Effect to close menu when clicking outside or navigating
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
-      if (isOpen && 
-          isMobile && 
-          e.target instanceof HTMLElement &&
-          !e.target.closest('.mobile-menu-container')) {
+      if (
+        isOpen && 
+        isMobile && 
+        mobileMenuRef.current && 
+        !mobileMenuRef.current.contains(e.target as Node) &&
+        !(e.target as Element).closest('.mobile-menu-button')
+      ) {
         setIsOpen(false);
       }
     };
@@ -90,7 +94,7 @@ export function Navbar() {
     return () => {
       document.removeEventListener('click', handleOutsideClick);
     };
-  }, [location.pathname, isMobile]);
+  }, [location.pathname, isMobile, isOpen]);
 
   const toggleDarkMode = () => {
     document.documentElement.classList.toggle("dark");
@@ -336,6 +340,8 @@ export function Navbar() {
               variant="ghost"
               size="icon"
               onClick={() => setIsOpen(!isOpen)}
+              className="mobile-menu-button"
+              aria-label="Toggle mobile menu"
             >
               {isOpen ? (
                 <X className="h-6 w-6" />
@@ -349,11 +355,12 @@ export function Navbar() {
 
       {isOpen && isMobile && (
         <motion.div
+          ref={mobileMenuRef}
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.3 }}
-          className="md:hidden h-screen bg-white dark:bg-gray-900 fixed inset-0 z-40 pt-16 mobile-menu-container"
+          className="md:hidden h-screen bg-white dark:bg-gray-900 fixed inset-0 z-40 pt-16 mobile-menu-container overflow-y-auto"
         >
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             <SignedIn>
