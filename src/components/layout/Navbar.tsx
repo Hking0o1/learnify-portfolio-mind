@@ -20,6 +20,7 @@ import {
   GraduationCap,
   PlusCircle,
   Sparkles,
+  ChevronDown,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -48,6 +49,9 @@ export function Navbar() {
   const [isDarkMode, setIsDarkMode] = useState(() => 
     document.documentElement.classList.contains("dark")
   );
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isNotificationMenuOpen, setIsNotificationMenuOpen] = useState(false);
+  
   const isMobile = useIsMobile();
   const location = useLocation();
   const { searchQuery, setSearchQuery, handleSearch, handleKeyDown } = useSearch({
@@ -56,6 +60,8 @@ export function Navbar() {
   const { isAdmin, isInstructor } = useUserAuth();
   const { user } = useUser();
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const notificationMenuRef = useRef<HTMLDivElement>(null);
 
   // Effect to update isDarkMode state when system preference changes
   useEffect(() => {
@@ -90,6 +96,8 @@ export function Navbar() {
     
     // Close menu when route changes
     setIsOpen(false);
+    setIsUserMenuOpen(false);
+    setIsNotificationMenuOpen(false);
     
     return () => {
       document.removeEventListener('click', handleOutsideClick);
@@ -122,6 +130,13 @@ export function Navbar() {
     hidden: { rotate: -180, opacity: 0 },
     visible: { rotate: 0, opacity: 1, transition: { duration: 0.5 } }
   };
+
+  // Sample notifications
+  const notifications = [
+    { id: 1, title: "New course available", message: "Check out the new Data Science course!" },
+    { id: 2, title: "Quiz reminder", message: "You have a quiz due tomorrow" },
+    { id: 3, title: "Forum reply", message: "Someone replied to your forum post" }
+  ];
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-white/80 dark:bg-black/20 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800 transition-all duration-200">
@@ -212,19 +227,32 @@ export function Navbar() {
                 </Link>
               )}
 
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative"
-                onClick={() => {
-                  // Notification logic
-                }}
-              >
-                <Bell className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center animate-pulse">
-                  3
-                </span>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative"
+                  >
+                    <Bell className="h-5 w-5" />
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center animate-pulse">
+                      3
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {notifications.map((notification) => (
+                    <DropdownMenuItem key={notification.id} className="py-3 cursor-pointer">
+                      <div>
+                        <p className="font-medium">{notification.title}</p>
+                        <p className="text-sm text-muted-foreground">{notification.message}</p>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               <motion.div
                 initial="hidden"
@@ -429,16 +457,32 @@ export function Navbar() {
                       {user?.primaryEmailAddress?.emailAddress || ''}
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="ml-auto relative"
-                  >
-                    <Bell className="h-6 w-6" />
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
-                      3
-                    </span>
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="ml-auto relative"
+                      >
+                        <Bell className="h-6 w-6" />
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
+                          3
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {notifications.map((notification) => (
+                        <DropdownMenuItem key={notification.id}>
+                          <div>
+                            <p className="font-medium">{notification.title}</p>
+                            <p className="text-xs text-muted-foreground">{notification.message}</p>
+                          </div>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </motion.div>
             </SignedIn>
