@@ -40,7 +40,7 @@ const Courses = () => {
 
   const categories = [
     "Machine Learning",
-    "Data Analysis",
+    "Data Analysis", 
     "Portfolio Management",
     "Risk Assessment",
     "Financial Analysis",

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
@@ -84,7 +83,7 @@ const coursesData: Course[] = [
           },
           {
             id: 3,
-            title: "Knowledge Check",
+1 title: "Knowledge Check",
             type: "quiz",
             url: "https://example.com/quizzes/ml-intro",
             isCompleted: true
@@ -190,20 +189,16 @@ const CourseDetails = () => {
   const { isInstructor } = useUserAuth();
 
   useEffect(() => {
-    // Simulate API fetch with a delay
     const loadCourse = async () => {
       setIsLoading(true);
       try {
-        // In a real app, this would be an API call
         await new Promise(resolve => setTimeout(resolve, 1000));
         const foundCourse = coursesData.find(c => c.id === courseId);
         
         if (foundCourse) {
           setCourse(foundCourse);
-          // Set the first module as selected by default
           if (foundCourse.modules.length > 0) {
             setSelectedModule(foundCourse.modules[0]);
-            // Set the first material as active by default
             if (foundCourse.modules[0].materials.length > 0) {
               setActiveMaterial(foundCourse.modules[0].materials[0]);
             }
@@ -237,7 +232,6 @@ const CourseDetails = () => {
   };
 
   const markAsCompleted = (material: Material) => {
-    // Update the local state
     if (course && selectedModule) {
       const updatedCourse = { ...course };
       const moduleIndex = updatedCourse.modules.findIndex(m => m.id === selectedModule.id);
@@ -246,27 +240,22 @@ const CourseDetails = () => {
         const materialIndex = updatedCourse.modules[moduleIndex].materials.findIndex(m => m.id === material.id);
         
         if (materialIndex !== -1) {
-          // Create a new material with updated isCompleted status
           const updatedMaterial: Material = {
             ...updatedCourse.modules[moduleIndex].materials[materialIndex],
             isCompleted: true
           };
           
-          // Update the material in the course
           updatedCourse.modules[moduleIndex].materials[materialIndex] = updatedMaterial;
           
-          // Update the module progress
           const completedCount = updatedCourse.modules[moduleIndex].materials.filter(m => m.isCompleted).length;
           const totalCount = updatedCourse.modules[moduleIndex].materials.length;
           updatedCourse.modules[moduleIndex].progress = Math.round((completedCount / totalCount) * 100);
           
-          // Update the overall course progress
           const moduleProgressSum = updatedCourse.modules.reduce((sum, module) => sum + module.progress, 0);
           updatedCourse.progress = Math.round(moduleProgressSum / updatedCourse.modules.length);
           
           setCourse(updatedCourse);
           
-          // Also update the selected module and active material
           setSelectedModule(updatedCourse.modules[moduleIndex]);
           setActiveMaterial(updatedMaterial);
           
@@ -402,207 +391,206 @@ const CourseDetails = () => {
                   <TabsTrigger value="overview">Overview</TabsTrigger>
                   <TabsTrigger value="content">Course Content</TabsTrigger>
                 </TabsList>
-              </Tabs>
-            </CardHeader>
-            <CardContent className="p-6 pt-0">
-              <TabsContent value="overview" className="mt-6 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <div className="md:col-span-2">
-                    <div className="space-y-6">
-                      <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-                        <img
-                          src={course.thumbnail}
-                          alt={course.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      
-                      <div>
-                        <h2 className="text-xl font-semibold mb-2">About This Course</h2>
-                        <p className="text-muted-foreground">{course.description}</p>
-                      </div>
-                      
-                      <div>
-                        <h2 className="text-xl font-semibold mb-4">What You'll Learn</h2>
-                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {course.modules.map(module => (
-                            <li key={module.id} className="flex items-start">
-                              <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                              <span>{module.title}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="md:col-span-1">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Course Information</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Instructor</p>
-                          <p className="font-medium">{course.instructor}</p>
-                        </div>
-                        
-                        <div>
-                          <p className="text-sm text-muted-foreground">Level</p>
-                          <p className="font-medium">{course.level}</p>
-                        </div>
-                        
-                        <div>
-                          <p className="text-sm text-muted-foreground">Duration</p>
-                          <p className="font-medium">{course.duration}</p>
-                        </div>
-                        
-                        <div>
-                          <p className="text-sm text-muted-foreground">Category</p>
-                          <p className="font-medium">{course.category}</p>
-                        </div>
-                        
-                        <div>
-                          <p className="text-sm text-muted-foreground">Students Enrolled</p>
-                          <p className="font-medium">{course.enrolledStudents.toLocaleString()}</p>
-                        </div>
-                        
-                        <div>
-                          <p className="text-sm text-muted-foreground">Rating</p>
-                          <div className="flex items-center">
-                            <span className="font-medium mr-2">{course.rating}</span>
-                            <div className="flex">
-                              {Array.from({ length: 5 }).map((_, i) => (
-                                <span key={i} className={`text-lg ${i < Math.floor(course.rating) ? "text-yellow-500" : "text-gray-300"}`}>★</span>
-                              ))}
-                            </div>
-                            <span className="ml-2 text-sm text-muted-foreground">({course.reviews})</span>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <p className="text-sm text-muted-foreground">Tags</p>
-                          <div className="flex flex-wrap gap-2 mt-1">
-                            {course.tags.map((tag, index) => (
-                              <Badge key={index} variant="outline">{tag}</Badge>
-                            ))}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="content" className="mt-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <div className="md:col-span-1 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-xl font-semibold">Modules</h2>
-                      <Badge variant="outline" className="font-normal">
-                        {Math.round(course.progress)}% Complete
-                      </Badge>
-                    </div>
-                    
-                    <Progress value={course.progress} className="h-2" />
-                    
-                    <div className="space-y-2">
-                      {course.modules.map(module => (
-                        <Card 
-                          key={module.id} 
-                          className={`cursor-pointer transition-all hover:border-primary ${selectedModule?.id === module.id ? 'border-primary' : ''}`}
-                          onClick={() => handleModuleSelect(module)}
-                        >
-                          <CardHeader className="p-4">
-                            <div className="flex justify-between items-center">
-                              <CardTitle className="text-base">{module.title}</CardTitle>
-                              <Badge variant="outline">
-                                {module.progress}%
-                              </Badge>
-                            </div>
-                            <CardDescription className="line-clamp-2">
-                              {module.description}
-                            </CardDescription>
-                          </CardHeader>
-                          <CardFooter className="p-4 pt-0 flex justify-between text-sm">
-                            <span className="text-muted-foreground flex items-center">
-                              <Folder className="h-4 w-4 mr-1" /> 
-                              {module.materials.length} materials
-                            </span>
-                            <Progress value={module.progress} className="w-20 h-1.5" />
-                          </CardFooter>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="md:col-span-2">
-                    {selectedModule ? (
+
+                <TabsContent value="overview" className="mt-6 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-2">
                       <div className="space-y-6">
+                        <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                          <img
+                            src={course.thumbnail}
+                            alt={course.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        
                         <div>
-                          <h2 className="text-xl font-semibold mb-2">{selectedModule.title}</h2>
-                          <p className="text-muted-foreground">{selectedModule.description}</p>
+                          <h2 className="text-xl font-semibold mb-2">About This Course</h2>
+                          <p className="text-muted-foreground">{course.description}</p>
                         </div>
                         
-                        <div className="space-y-4">
-                          <h3 className="text-lg font-medium">Materials</h3>
-                          <div className="grid grid-cols-1 gap-3">
-                            {selectedModule.materials.map(material => (
-                              <div
-                                key={material.id}
-                                className={`p-3 border rounded-lg cursor-pointer transition-all flex justify-between items-center ${activeMaterial?.id === material.id ? 'border-primary bg-primary/5' : ''} ${material.isCompleted ? 'border-green-300 dark:border-green-800' : ''}`}
-                                onClick={() => handleMaterialSelect(material)}
-                              >
-                                <div className="flex items-center">
-                                  {material.type === 'video' && <Play className="h-4 w-4 mr-3 text-blue-500" />}
-                                  {material.type === 'document' && <FileText className="h-4 w-4 mr-3 text-amber-500" />}
-                                  {material.type === 'quiz' && <Trophy className="h-4 w-4 mr-3 text-green-500" />}
-                                  <div>
-                                    <p className="font-medium">{material.title}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {material.type.charAt(0).toUpperCase() + material.type.slice(1)}
-                                      {material.duration ? ` • ${material.duration}` : ''}
-                                    </p>
-                                  </div>
-                                </div>
-                                {material.isCompleted && (
-                                  <Badge variant="outline" className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800">
-                                    <Check className="h-3 w-3 mr-1" /> 
-                                    Completed
-                                  </Badge>
-                                )}
-                              </div>
+                        <div>
+                          <h2 className="text-xl font-semibold mb-4">What You'll Learn</h2>
+                          <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {course.modules.map(module => (
+                              <li key={module.id} className="flex items-start">
+                                <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                                <span>{module.title}</span>
+                              </li>
                             ))}
-                          </div>
+                          </ul>
                         </div>
-                        
-                        <div className="border rounded-lg p-6">
-                          <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-medium">
-                              {activeMaterial ? activeMaterial.title : 'Select a material'}
-                            </h3>
-                            {activeMaterial && !activeMaterial.isCompleted && (
-                              <Button onClick={() => markAsCompleted(activeMaterial)} size="sm">
-                                <Check className="h-4 w-4 mr-2" /> Mark as Completed
-                              </Button>
-                            )}
+                      </div>
+                    </div>
+                    
+                    <div className="md:col-span-1">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Course Information</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground">Instructor</p>
+                            <p className="font-medium">{course.instructor}</p>
                           </div>
                           
-                          {renderMaterialContent()}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-full py-16 text-center">
-                        <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
-                        <h3 className="text-xl font-medium mb-2">Select a Module</h3>
-                        <p className="text-muted-foreground">
-                          Choose a module from the left to view its content
-                        </p>
-                      </div>
-                    )}
+                          <div>
+                            <p className="text-sm text-muted-foreground">Level</p>
+                            <p className="font-medium">{course.level}</p>
+                          </div>
+                          
+                          <div>
+                            <p className="text-sm text-muted-foreground">Duration</p>
+                            <p className="font-medium">{course.duration}</p>
+                          </div>
+                          
+                          <div>
+                            <p className="text-sm text-muted-foreground">Category</p>
+                            <p className="font-medium">{course.category}</p>
+                          </div>
+                          
+                          <div>
+                            <p className="text-sm text-muted-foreground">Students Enrolled</p>
+                            <p className="font-medium">{course.enrolledStudents.toLocaleString()}</p>
+                          </div>
+                          
+                          <div>
+                            <p className="text-sm text-muted-foreground">Rating</p>
+                            <div className="flex items-center">
+                              <span className="font-medium mr-2">{course.rating}</span>
+                              <div className="flex">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <span key={i} className={`text-lg ${i < Math.floor(course.rating) ? "text-yellow-500" : "text-gray-300"}`}>★</span>
+                                ))}
+                              </div>
+                              <span className="ml-2 text-sm text-muted-foreground">({course.reviews})</span>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <p className="text-sm text-muted-foreground">Tags</p>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {course.tags.map((tag, index) => (
+                                <Badge key={index} variant="outline">{tag}</Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
                   </div>
-                </div>
-              </TabsContent>
+                </TabsContent>
+                
+                <TabsContent value="content" className="mt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-1 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-xl font-semibold">Modules</h2>
+                        <Badge variant="outline" className="font-normal">
+                          {Math.round(course.progress)}% Complete
+                        </Badge>
+                      </div>
+                      
+                      <Progress value={course.progress} className="h-2" />
+                      
+                      <div className="space-y-2">
+                        {course.modules.map(module => (
+                          <Card 
+                            key={module.id} 
+                            className={`cursor-pointer transition-all hover:border-primary ${selectedModule?.id === module.id ? 'border-primary' : ''}`}
+                            onClick={() => handleModuleSelect(module)}
+                          >
+                            <CardHeader className="p-4">
+                              <div className="flex justify-between items-center">
+                                <CardTitle className="text-base">{module.title}</CardTitle>
+                                <Badge variant="outline">
+                                  {module.progress}%
+                                </Badge>
+                              </div>
+                              <CardDescription className="line-clamp-2">
+                                {module.description}
+                              </CardDescription>
+                            </CardHeader>
+                            <CardFooter className="p-4 pt-0 flex justify-between text-sm">
+                              <span className="text-muted-foreground flex items-center">
+                                <Folder className="h-4 w-4 mr-1" /> 
+                                {module.materials.length} materials
+                              </span>
+                              <Progress value={module.progress} className="w-20 h-1.5" />
+                            </CardFooter>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="md:col-span-2">
+                      {selectedModule ? (
+                        <div className="space-y-6">
+                          <div>
+                            <h2 className="text-xl font-semibold mb-2">{selectedModule.title}</h2>
+                            <p className="text-muted-foreground">{selectedModule.description}</p>
+                          </div>
+                          
+                          <div className="space-y-4">
+                            <h3 className="text-lg font-medium">Materials</h3>
+                            <div className="grid grid-cols-1 gap-3">
+                              {selectedModule.materials.map(material => (
+                                <div
+                                  key={material.id}
+                                  className={`p-3 border rounded-lg cursor-pointer transition-all flex justify-between items-center ${activeMaterial?.id === material.id ? 'border-primary bg-primary/5' : ''} ${material.isCompleted ? 'border-green-300 dark:border-green-800' : ''}`}
+                                  onClick={() => handleMaterialSelect(material)}
+                                >
+                                  <div className="flex items-center">
+                                    {material.type === 'video' && <Play className="h-4 w-4 mr-3 text-blue-500" />}
+                                    {material.type === 'document' && <FileText className="h-4 w-4 mr-3 text-amber-500" />}
+                                    {material.type === 'quiz' && <Trophy className="h-4 w-4 mr-3 text-green-500" />}
+                                    <div>
+                                      <p className="font-medium">{material.title}</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {material.type.charAt(0).toUpperCase() + material.type.slice(1)}
+                                        {material.duration ? ` • ${material.duration}` : ''}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  {material.isCompleted && (
+                                    <Badge variant="outline" className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800">
+                                      <Check className="h-3 w-3 mr-1" /> 
+                                      Completed
+                                    </Badge>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="border rounded-lg p-6">
+                            <div className="flex justify-between items-center mb-4">
+                              <h3 className="text-lg font-medium">
+                                {activeMaterial ? activeMaterial.title : 'Select a material'}
+                              </h3>
+                              {activeMaterial && !activeMaterial.isCompleted && (
+                                <Button onClick={() => markAsCompleted(activeMaterial)} size="sm">
+                                  <Check className="h-4 w-4 mr-2" /> Mark as Completed
+                                </Button>
+                              )}
+                            </div>
+                            
+                            {renderMaterialContent()}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-full py-16 text-center">
+                          <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
+                          <h3 className="text-xl font-medium mb-2">Select a Module</h3>
+                          <p className="text-muted-foreground">
+                            Choose a module from the left to view its content
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </motion.div>
