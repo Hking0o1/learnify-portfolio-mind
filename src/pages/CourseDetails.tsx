@@ -83,7 +83,7 @@ const coursesData: Course[] = [
           },
           {
             id: 3,
-1 title: "Knowledge Check",
+            title: "Knowledge Check",
             type: "quiz",
             url: "https://example.com/quizzes/ml-intro",
             isCompleted: true
@@ -591,6 +591,9 @@ const CourseDetails = () => {
                   </div>
                 </TabsContent>
               </Tabs>
+            </CardHeader>
+            <CardContent>
+              {/* Card content goes here if needed */}
             </CardContent>
           </Card>
         </motion.div>
