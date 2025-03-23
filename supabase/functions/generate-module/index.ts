@@ -56,7 +56,6 @@ serve(async (req) => {
     `
 
     // Using Hugging Face Inference API for text generation
-    // You would need to set HF_API_KEY in your Supabase secrets
     const HF_API_KEY = Deno.env.get("HF_API_KEY")
     
     if (!HF_API_KEY) {
@@ -71,7 +70,7 @@ serve(async (req) => {
       )
     }
 
-    // Using an open-source alternative model that's good for structured generation
+    // Using Mistral model that's good for structured generation
     const response = await fetch(
       "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
       {
