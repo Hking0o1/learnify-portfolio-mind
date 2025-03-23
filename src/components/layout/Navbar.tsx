@@ -43,14 +43,12 @@ import {
   useUser,
 } from "@clerk/clerk-react";
 import { motion } from "framer-motion";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => 
     document.documentElement.classList.contains("dark")
   );
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isNotificationMenuOpen, setIsNotificationMenuOpen] = useState(false);
   
   const isMobile = useIsMobile();
   const location = useLocation();
@@ -59,10 +57,7 @@ export function Navbar() {
   });
   const { isAdmin, isInstructor } = useUserAuth();
   const { user } = useUser();
-  const mobileMenuRef = useRef<HTMLDivElement>(null);
-  const userMenuRef = useRef<HTMLDivElement>(null);
-  const notificationMenuRef = useRef<HTMLDivElement>(null);
-
+  
   // Effect to update isDarkMode state when system preference changes
   useEffect(() => {
     const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -77,32 +72,6 @@ export function Navbar() {
       darkModeMediaQuery.removeEventListener('change', handleChange);
     };
   }, []);
-
-  // Effect to close menu when clicking outside or navigating
-  useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (
-        isOpen && 
-        isMobile && 
-        mobileMenuRef.current && 
-        !mobileMenuRef.current.contains(e.target as Node) &&
-        !(e.target as Element).closest('.mobile-menu-button')
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('click', handleOutsideClick);
-    
-    // Close menu when route changes
-    setIsOpen(false);
-    setIsUserMenuOpen(false);
-    setIsNotificationMenuOpen(false);
-    
-    return () => {
-      document.removeEventListener('click', handleOutsideClick);
-    };
-  }, [location.pathname, isMobile, isOpen]);
 
   const toggleDarkMode = () => {
     document.documentElement.classList.toggle("dark");
@@ -232,7 +201,7 @@ export function Navbar() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="relative"
+                    className="relative cursor-pointer"
                   >
                     <Bell className="h-5 w-5" />
                     <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center animate-pulse">
@@ -356,139 +325,114 @@ export function Navbar() {
             </div>
           </SignedOut>
 
+          {/* Mobile Navigation - Using Sheet component for better mobile experience */}
           <div className="flex md:hidden items-center space-x-4">
-            <Button variant="ghost" size="icon" onClick={toggleDarkMode}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleDarkMode}
+              className="transition-transform"
+            >
               {isDarkMode ? (
                 <Sun className="h-5 w-5" />
               ) : (
                 <Moon className="h-5 w-5" />
               )}
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsOpen(!isOpen)}
-              className="mobile-menu-button"
-              aria-label="Toggle mobile menu"
-            >
-              {isOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </Button>
+
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Open Menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="py-6 w-[80vw] sm:max-w-sm">
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 py-2">
+                    <SignedIn>
+                      <div className="flex items-center px-2 py-3 mb-6">
+                        <UserButton afterSignOutUrl="/" />
+                        <div className="ml-3">
+                          <div className="text-base font-medium">
+                            {user?.fullName || 'User'}
+                          </div>
+                          <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            {user?.primaryEmailAddress?.emailAddress || ''}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="px-2 space-y-1 mb-6">
+                        {navigation.map((item) => (
+                          <Link
+                            key={item.name}
+                            to={item.href}
+                            className={`flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium transition-all duration-200 ${
+                              location.pathname === item.href
+                                ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                            }`}
+                          >
+                            <item.icon className="h-5 w-5" />
+                            {item.name}
+                          </Link>
+                        ))}
+                      </div>
+
+                      <div className="px-2 pt-4 pb-3 border-t border-gray-200 dark:border-gray-700">
+                        <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Notifications
+                        </div>
+                        <div className="space-y-2 mt-1">
+                          {notifications.map((notification) => (
+                            <div key={notification.id} className="px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800">
+                              <p className="font-medium text-sm">{notification.title}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{notification.message}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </SignedIn>
+
+                    <SignedOut>
+                      <div className="mt-6 px-3 space-y-3">
+                        <Link to="/instructor-login" className="block w-full">
+                          <Button variant="outline" className="w-full flex items-center justify-center gap-2">
+                            <GraduationCap className="h-4 w-4" />
+                            <span>For Instructors</span>
+                          </Button>
+                        </Link>
+                        
+                        <SignInButton mode="modal">
+                          <Button variant="outline" className="w-full">Sign In</Button>
+                        </SignInButton>
+                        
+                        <SignUpButton mode="modal">
+                          <Button className="w-full">Sign Up</Button>
+                        </SignUpButton>
+                      </div>
+                    </SignedOut>
+                  </div>
+
+                  <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <div className="px-2">
+                      <Button variant="ghost" className="w-full justify-start text-sm" onClick={toggleDarkMode}>
+                        {isDarkMode ? (
+                          <Sun className="h-4 w-4 mr-3" />
+                        ) : (
+                          <Moon className="h-4 w-4 mr-3" />
+                        )}
+                        {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>
-
-      {isOpen && isMobile && (
-        <motion.div
-          ref={mobileMenuRef}
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.3 }}
-          className="md:hidden h-screen bg-white dark:bg-gray-900 fixed inset-0 z-40 pt-16 mobile-menu-container overflow-y-auto"
-        >
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <SignedIn>
-              {navigation.map((item) => (
-                <motion.div
-                  key={item.name}
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.1 * navigation.indexOf(item) }}
-                >
-                  <Link
-                    to={item.href}
-                    className={`flex items-center gap-2 px-3 py-4 rounded-md text-base font-medium transition-all duration-200 ${
-                      location.pathname === item.href
-                        ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                    }`}
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.name}
-                  </Link>
-                </motion.div>
-              ))}
-            </SignedIn>
-
-            <SignedOut>
-              <div className="mt-6 px-3 space-y-3">
-                <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
-                  <Link to="/instructor-login" className="block w-full" onClick={() => setIsOpen(false)}>
-                    <Button variant="outline" className="w-full flex items-center justify-center gap-2">
-                      <GraduationCap className="h-4 w-4" />
-                      <span>For Instructors</span>
-                    </Button>
-                  </Link>
-                </motion.div>
-                
-                <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}>
-                  <SignInButton mode="modal">
-                    <Button variant="outline" className="w-full" onClick={() => setIsOpen(false)}>Sign In</Button>
-                  </SignInButton>
-                </motion.div>
-                
-                <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}>
-                  <SignUpButton mode="modal">
-                    <Button className="w-full" onClick={() => setIsOpen(false)}>Sign Up</Button>
-                  </SignUpButton>
-                </motion.div>
-              </div>
-            </SignedOut>
-
-            <SignedIn>
-              <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="pt-4 pb-3 border-t border-gray-200 dark:border-gray-700"
-              >
-                <div className="flex items-center px-5">
-                  <UserButton afterSignOutUrl="/" />
-                  <div className="ml-3">
-                    <div className="text-base font-medium text-gray-800 dark:text-gray-200">
-                      {user?.fullName || 'User'}
-                    </div>
-                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      {user?.primaryEmailAddress?.emailAddress || ''}
-                    </div>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="ml-auto relative"
-                      >
-                        <Bell className="h-6 w-6" />
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
-                          3
-                        </span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      {notifications.map((notification) => (
-                        <DropdownMenuItem key={notification.id}>
-                          <div>
-                            <p className="font-medium">{notification.title}</p>
-                            <p className="text-xs text-muted-foreground">{notification.message}</p>
-                          </div>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </motion.div>
-            </SignedIn>
-          </div>
-        </motion.div>
-      )}
     </nav>
   );
 }
