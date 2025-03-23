@@ -228,6 +228,7 @@ const Dashboard = () => {
             <TabsTrigger value="recommended">Recommended</TabsTrigger>
             <TabsTrigger value="achievements">Achievements</TabsTrigger>
           </TabsList>
+          
           <TabsContent value="inProgress">
             <motion.div
               variants={container}
@@ -235,7 +236,7 @@ const Dashboard = () => {
               animate="show"
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             >
-              {courses.map((course, index) => (
+              {courses.map((course) => (
                 <motion.div key={course.id} variants={item}>
                   <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-all duration-300">
                     <div className="relative h-48">
@@ -284,6 +285,7 @@ const Dashboard = () => {
               ))}
             </motion.div>
           </TabsContent>
+          
           <TabsContent value="recommended">
             <motion.div
               variants={container}
@@ -291,7 +293,7 @@ const Dashboard = () => {
               animate="show"
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             >
-              {recommendations.map((course, index) => (
+              {recommendations.map((course) => (
                 <motion.div key={course.id} variants={item}>
                   <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-all duration-300">
                     <div className="relative h-48">
@@ -329,6 +331,7 @@ const Dashboard = () => {
               ))}
             </motion.div>
           </TabsContent>
+          
           <TabsContent value="achievements">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
