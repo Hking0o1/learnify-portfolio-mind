@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { SaveIcon, XIcon } from 'lucide-react';
 
 interface ModuleFormProps {
   courseId: string;
@@ -45,9 +46,9 @@ export const ModuleForm = ({ courseId, existingModule, onSuccess }: ModuleFormPr
     try {
       let result;
       if (isEditing && existingModule?.id) {
-        result = await moduleAPI.updateModule(existingModule.id, formData);
+        result = await moduleAPI.updateModuleWithToast(existingModule.id, formData);
       } else {
-        result = await moduleAPI.createModule(formData as Module);
+        result = await moduleAPI.createModuleWithToast(formData as Module);
       }
       
       if (result && onSuccess) {
@@ -114,11 +115,17 @@ export const ModuleForm = ({ courseId, existingModule, onSuccess }: ModuleFormPr
             type="button" 
             variant="outline" 
             onClick={() => navigate(`/courses/${courseId}`)}
+            icon={<XIcon />}
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : isEditing ? 'Update Module' : 'Create Module'}
+          <Button 
+            type="submit" 
+            isLoading={isSubmitting}
+            loadingText={isEditing ? "Updating..." : "Creating..."}
+            icon={<SaveIcon />}
+          >
+            {isEditing ? 'Update Module' : 'Create Module'}
           </Button>
         </CardFooter>
       </form>

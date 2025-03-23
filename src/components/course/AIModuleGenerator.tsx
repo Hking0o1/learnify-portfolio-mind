@@ -1,164 +1,217 @@
 
-import React, { useState } from 'react';
-import { generateModulesWithAI } from '@/services/api';
-import { moduleAPI } from '@/services/modules';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2, Sparkles } from 'lucide-react';
+import { generateModulesWithAI, saveGeneratedModules, GeneratedModule } from '@/services/ai-modules';
 
 interface AIModuleGeneratorProps {
   courseId: string;
   courseTitle: string;
   courseDescription: string;
-  onSuccess?: () => void;
+  onSuccess?: (modules: any[]) => void;
 }
 
-export const AIModuleGenerator = ({
-  courseId,
-  courseTitle: defaultTitle,
-  courseDescription: defaultDescription,
-  onSuccess
-}: AIModuleGeneratorProps) => {
-  const [courseTitle, setCourseTitle] = useState(defaultTitle);
-  const [courseDescription, setCourseDescription] = useState(defaultDescription);
-  const [numModules, setNumModules] = useState(3);
-  const [difficultyLevel, setDifficultyLevel] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Intermediate');
-  const [isGenerating, setIsGenerating] = useState(false);
+const AIModuleGenerator = ({ courseId, courseTitle, courseDescription, onSuccess }: AIModuleGeneratorProps) => {
   const { toast } = useToast();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [numModules, setNumModules] = useState(3);
+  const [difficultyLevel, setDifficultyLevel] = useState('intermediate');
+  const [generatedModules, setGeneratedModules] = useState<GeneratedModule[]>([]);
+  const [customCourseTitle, setCustomCourseTitle] = useState(courseTitle);
+  const [customCourseDescription, setCustomCourseDescription] = useState(courseDescription);
 
-  const handleGenerate = async () => {
+  const handleGenerateModules = async () => {
     setIsGenerating(true);
-    
     try {
-      // Generate modules with AI
-      const modules = await generateModulesWithAI(
-        {
-          courseTitle,
-          courseDescription,
-          numModules,
-          difficultyLevel
-        },
-        courseId
-      );
-      
-      // Create the modules in the database
-      for (const module of modules) {
-        await moduleAPI.createModule(module);
-      }
-      
-      toast({
-        title: "Success",
-        description: `Generated ${modules.length} modules for your course`,
+      const result = await generateModulesWithAI({
+        courseTitle: customCourseTitle || courseTitle,
+        courseDescription: customCourseDescription || courseDescription,
+        numModules,
+        difficultyLevel
       });
       
-      if (onSuccess) {
-        onSuccess();
+      if (result && result.modules) {
+        setGeneratedModules(result.modules);
+        toast({
+          title: "Modules Generated",
+          description: `${result.modules.length} modules generated successfully.`,
+        });
       }
     } catch (error) {
-      console.error('Error generating modules:', error);
+      console.error("Error generating modules:", error);
       toast({
-        title: "Error",
-        description: "Failed to generate modules. Please try again.",
-        variant: "destructive",
+        title: "Generation Failed",
+        description: error.message || "Failed to generate modules. Please try again.",
+        variant: "destructive"
       });
     } finally {
       setIsGenerating(false);
     }
   };
 
+  const handleSaveModules = async () => {
+    if (!generatedModules.length) return;
+    
+    setIsSaving(true);
+    try {
+      const savedModules = await saveGeneratedModules(courseId, generatedModules);
+      toast({
+        title: "Modules Saved",
+        description: `${savedModules.length} modules saved to your course.`,
+      });
+      
+      if (onSuccess) {
+        onSuccess(savedModules);
+      }
+      
+      // Clear generated modules after saving
+      setGeneratedModules([]);
+    } catch (error) {
+      console.error("Error saving modules:", error);
+      toast({
+        title: "Save Failed",
+        description: error.message || "Failed to save modules. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
-    <Card className="max-w-2xl">
+    <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-blue-500" />
+          <Sparkles className="h-5 w-5 text-yellow-500" />
           AI Module Generator
         </CardTitle>
         <CardDescription>
-          Use AI to automatically generate course modules based on your course details
+          Use AI to quickly generate course modules and learning materials
         </CardDescription>
       </CardHeader>
       
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="course-title">Course Title</Label>
-          <Input
-            id="course-title"
-            value={courseTitle}
-            onChange={(e) => setCourseTitle(e.target.value)}
-            placeholder="e.g., Machine Learning Fundamentals"
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="course-description">Course Description</Label>
-          <Textarea
-            id="course-description"
-            value={courseDescription}
-            onChange={(e) => setCourseDescription(e.target.value)}
-            placeholder="Provide a detailed description of your course"
-            rows={3}
-          />
-          <p className="text-sm text-muted-foreground">
-            The more detailed your description, the better the generated modules will be
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="num-modules">Number of Modules</Label>
-            <Input
-              id="num-modules"
-              type="number"
-              min={1}
-              max={10}
-              value={numModules}
-              onChange={(e) => setNumModules(parseInt(e.target.value))}
-            />
+        {!generatedModules.length ? (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="customTitle">Course Title</Label>
+              <Input 
+                id="customTitle" 
+                value={customCourseTitle} 
+                onChange={(e) => setCustomCourseTitle(e.target.value)}
+                placeholder="Enter course title for AI generation"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="customDescription">Course Description</Label>
+              <Textarea 
+                id="customDescription" 
+                value={customCourseDescription} 
+                onChange={(e) => setCustomCourseDescription(e.target.value)}
+                placeholder="Enter course description for better AI results"
+                rows={3}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="numModules">Number of Modules</Label>
+                <Input 
+                  id="numModules" 
+                  type="number" 
+                  min={1} 
+                  max={10} 
+                  value={numModules} 
+                  onChange={(e) => setNumModules(parseInt(e.target.value) || 3)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="difficultyLevel">Difficulty Level</Label>
+                <select
+                  id="difficultyLevel"
+                  className="w-full p-2 rounded-md border border-input bg-background"
+                  value={difficultyLevel}
+                  onChange={(e) => setDifficultyLevel(e.target.value)}
+                >
+                  <option value="beginner">Beginner</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                  <option value="expert">Expert</option>
+                </select>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="space-y-4">
+            <h3 className="font-medium">Generated Modules</h3>
+            <div className="border rounded-md divide-y">
+              {generatedModules.map((module, index) => (
+                <div key={index} className="p-4">
+                  <h4 className="font-medium">{module.title}</h4>
+                  <p className="text-sm text-muted-foreground mt-1">{module.description}</p>
+                  
+                  {module.materials && module.materials.length > 0 && (
+                    <div className="mt-3">
+                      <h5 className="text-sm font-medium mb-2">Materials:</h5>
+                      <ul className="text-sm space-y-1 pl-5 list-disc">
+                        {module.materials.map((material, idx) => (
+                          <li key={idx}>
+                            <span className="font-medium">{material.title}</span>
+                            <span className="text-xs text-muted-foreground ml-2">({material.type})</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="difficulty">Difficulty Level</Label>
-            <Select 
-              value={difficultyLevel} 
-              onValueChange={(value) => setDifficultyLevel(value as 'Beginner' | 'Intermediate' | 'Advanced')}
-            >
-              <SelectTrigger id="difficulty">
-                <SelectValue placeholder="Select difficulty" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Beginner">Beginner</SelectItem>
-                <SelectItem value="Intermediate">Intermediate</SelectItem>
-                <SelectItem value="Advanced">Advanced</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        )}
       </CardContent>
       
-      <CardFooter>
-        <Button 
-          onClick={handleGenerate} 
-          disabled={isGenerating || !courseTitle || !courseDescription}
-          className="w-full"
-        >
-          {isGenerating ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Generating Modules...
-            </>
-          ) : (
-            <>
-              <Sparkles className="mr-2 h-4 w-4" />
-              Generate Modules with AI
-            </>
-          )}
-        </Button>
+      <CardFooter className="flex justify-between border-t p-4">
+        {!generatedModules.length ? (
+          <Button 
+            onClick={handleGenerateModules} 
+            isLoading={isGenerating}
+            loadingText="Generating..."
+            icon={<Sparkles className="h-4 w-4" />}
+            className="w-full"
+          >
+            Generate Modules with AI
+          </Button>
+        ) : (
+          <div className="flex w-full gap-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setGeneratedModules([])}
+              disabled={isSaving}
+              className="flex-1"
+            >
+              Start Over
+            </Button>
+            <Button 
+              onClick={handleSaveModules} 
+              isLoading={isSaving}
+              loadingText="Saving to Course..."
+              className="flex-1"
+            >
+              Save Modules to Course
+            </Button>
+          </div>
+        )}
       </CardFooter>
     </Card>
   );
 };
+
+export default AIModuleGenerator;

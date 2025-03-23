@@ -1,56 +1,94 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Module } from './modules';
 
-interface GenerateModulesParams {
-  courseTitle: string;
-  courseDescription: string;
-  numModules: number;
-  difficultyLevel: 'Beginner' | 'Intermediate' | 'Advanced';
-}
-
-interface GeneratedModuleResponse {
-  modules: {
+export interface GeneratedModule {
+  title: string;
+  description: string;
+  position: number;
+  materials: {
     title: string;
-    description: string;
-    position: number;
-    materials: {
-      title: string;
-      type: string;
-      content: string;
-    }[];
+    type: string;
+    content: string;
   }[];
 }
 
-export const generateModulesWithAI = async (
-  params: GenerateModulesParams,
-  courseId: string
-): Promise<Module[]> => {
+export interface ModuleGenerationParams {
+  courseTitle: string;
+  courseDescription: string;
+  numModules: number;
+  difficultyLevel: string;
+}
+
+// Generate modules using AI via Edge Function
+export const generateModulesWithAI = async (params: ModuleGenerationParams): Promise<{ modules: GeneratedModule[] }> => {
   try {
-    // Call the Supabase Edge Function to generate modules
     const { data, error } = await supabase.functions.invoke('generate-module', {
       body: params,
     });
 
     if (error) {
-      console.error('Error calling generate-module function:', error);
-      throw error;
+      console.error('Error generating modules:', error);
+      throw new Error(error.message || 'Failed to generate modules');
     }
 
-    // Process the generated modules into the format expected by the app
-    const response = data as GeneratedModuleResponse;
-    
-    // Map the generated modules to the Module format expected by our application
-    const modulesToCreate: Module[] = response.modules.map(moduleData => ({
-      title: moduleData.title,
-      description: moduleData.description,
-      position: moduleData.position,
-      course_id: courseId
-    }));
-
-    return modulesToCreate;
+    return data;
   } catch (error) {
-    console.error('Error generating modules with AI:', error);
+    console.error('Error in generateModulesWithAI:', error);
+    throw error;
+  }
+};
+
+// Save AI-generated modules to the database
+export const saveGeneratedModules = async (courseId: string, generatedModules: GeneratedModule[]) => {
+  try {
+    const savedModules = [];
+
+    // Save each module and its materials
+    for (const moduleData of generatedModules) {
+      // Create the module
+      const { data: module, error: moduleError } = await supabase
+        .from('modules')
+        .insert([{
+          title: moduleData.title,
+          description: moduleData.description,
+          position: moduleData.position,
+          course_id: courseId
+        }])
+        .select()
+        .single();
+
+      if (moduleError) throw moduleError;
+
+      // Create materials for this module
+      if (moduleData.materials && moduleData.materials.length > 0) {
+        const materialsToInsert = moduleData.materials.map((material, index) => ({
+          title: material.title,
+          type: material.type || 'document',
+          content: material.content,
+          position: index,
+          module_id: module.id
+        }));
+
+        const { data: materials, error: materialsError } = await supabase
+          .from('materials')
+          .insert(materialsToInsert)
+          .select();
+
+        if (materialsError) throw materialsError;
+
+        // Combine module with its materials
+        savedModules.push({
+          ...module,
+          materials
+        });
+      } else {
+        savedModules.push(module);
+      }
+    }
+
+    return savedModules;
+  } catch (error) {
+    console.error('Error saving generated modules:', error);
     throw error;
   }
 };

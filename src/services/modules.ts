@@ -8,15 +8,19 @@ export interface Module {
   description: string;
   position: number;
   course_id: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Material {
   id?: string;
   title: string;
-  type: 'video' | 'document' | 'quiz';
+  type: string;
   content: string;
   position: number;
   module_id: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export const moduleAPI = {
@@ -32,7 +36,7 @@ export const moduleAPI = {
     return data;
   },
   
-  // Get a single module with its materials
+  // Get a single module by ID
   getModule: async (moduleId: string) => {
     const { data, error } = await supabase
       .from('modules')
@@ -77,18 +81,41 @@ export const moduleAPI = {
     if (error) throw error;
     return { success: true };
   },
-  
+
   // Add material to a module
-  addMaterial: async (material: Material) => {
+  addMaterial: async (moduleId: string, materialData: Partial<Material>) => {
     const { data, error } = await supabase
       .from('materials')
-      .insert([material])
+      .insert([{ ...materialData, module_id: moduleId }])
       .select();
     
     if (error) throw error;
     return data[0];
   },
   
+  // Update a material
+  updateMaterial: async (materialId: string, materialData: Partial<Material>) => {
+    const { data, error } = await supabase
+      .from('materials')
+      .update(materialData)
+      .eq('id', materialId)
+      .select();
+    
+    if (error) throw error;
+    return data[0];
+  },
+  
+  // Delete a material
+  deleteMaterial: async (materialId: string) => {
+    const { error } = await supabase
+      .from('materials')
+      .delete()
+      .eq('id', materialId);
+    
+    if (error) throw error;
+    return { success: true };
+  },
+
   // Get all materials for a module
   getMaterials: async (moduleId: string) => {
     const { data, error } = await supabase
@@ -106,67 +133,87 @@ export const moduleAPI = {
 export const useModuleAPI = () => {
   const { toast } = useToast();
   
-  const createModuleWithToast = async (moduleData: Module) => {
-    try {
-      const result = await moduleAPI.createModule(moduleData);
-      toast({
-        title: "Success",
-        description: "Module created successfully",
-      });
-      return result;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to create module";
-      toast({
-        title: "Error",
-        description: message,
-        variant: "destructive",
-      });
-      return null;
-    }
-  };
-  
-  const updateModuleWithToast = async (moduleId: string, moduleData: Partial<Module>) => {
-    try {
-      const result = await moduleAPI.updateModule(moduleId, moduleData);
-      toast({
-        title: "Success",
-        description: "Module updated successfully",
-      });
-      return result;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to update module";
-      toast({
-        title: "Error",
-        description: message,
-        variant: "destructive",
-      });
-      return null;
-    }
-  };
-  
-  const deleteModuleWithToast = async (moduleId: string) => {
-    try {
-      await moduleAPI.deleteModule(moduleId);
-      toast({
-        title: "Success",
-        description: "Module deleted successfully",
-      });
-      return true;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to delete module";
-      toast({
-        title: "Error",
-        description: message,
-        variant: "destructive",
-      });
-      return false;
-    }
-  };
-  
   return {
-    createModule: createModuleWithToast,
-    updateModule: updateModuleWithToast,
-    deleteModule: deleteModuleWithToast,
     ...moduleAPI,
+    
+    // Create module with toast
+    createModuleWithToast: async (moduleData: Module) => {
+      try {
+        const result = await moduleAPI.createModule(moduleData);
+        toast({
+          title: "Module created",
+          description: "The module has been created successfully",
+        });
+        return result;
+      } catch (error) {
+        console.error("Error creating module:", error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to create module",
+          variant: "destructive",
+        });
+        throw error;
+      }
+    },
+    
+    // Update module with toast
+    updateModuleWithToast: async (moduleId: string, moduleData: Partial<Module>) => {
+      try {
+        const result = await moduleAPI.updateModule(moduleId, moduleData);
+        toast({
+          title: "Module updated",
+          description: "The module has been updated successfully",
+        });
+        return result;
+      } catch (error) {
+        console.error("Error updating module:", error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to update module",
+          variant: "destructive",
+        });
+        throw error;
+      }
+    },
+    
+    // Delete module with toast
+    deleteModuleWithToast: async (moduleId: string) => {
+      try {
+        await moduleAPI.deleteModule(moduleId);
+        toast({
+          title: "Module deleted",
+          description: "The module has been deleted successfully",
+        });
+        return { success: true };
+      } catch (error) {
+        console.error("Error deleting module:", error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to delete module",
+          variant: "destructive",
+        });
+        throw error;
+      }
+    },
+    
+    // Add material with toast
+    addMaterialWithToast: async (moduleId: string, materialData: Partial<Material>) => {
+      try {
+        const result = await moduleAPI.addMaterial(moduleId, materialData);
+        toast({
+          title: "Material added",
+          description: "The material has been added successfully",
+        });
+        return result;
+      } catch (error) {
+        console.error("Error adding material:", error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to add material",
+          variant: "destructive",
+        });
+        throw error;
+      }
+    }
   };
 };
