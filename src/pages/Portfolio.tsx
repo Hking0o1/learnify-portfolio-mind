@@ -26,9 +26,9 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { PieChart, Pie, Cell, ResponsiveContainer, AreaChart as RechartArea, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart as RechartBar, Bar } from "recharts";
-import { usePortfolioAPI } from "@/services/api";
+import { usePortfolioAPI, type Recommendation } from "@/services/api";
 import { useUserAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Portfolio = () => {
@@ -38,63 +38,37 @@ const Portfolio = () => {
     exportPortfolioWithToast,
     sharePortfolioWithToast,
     getRecommendationsWithToast,
-    startAssessmentWithToast
+    startAssessmentWithToast,
+    getUserSkills
   } = usePortfolioAPI();
   
   const [isExporting, setIsExporting] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false);
+  const [isStartingAssessment, setIsStartingAssessment] = useState(false);
+  const [skillGroups, setSkillGroups] = useState([]);
+  const [learningProgress, setLearningProgress] = useState([]);
+  const [skillDistribution, setSkillDistribution] = useState([]);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [userDataLoaded, setUserDataLoaded] = useState(false);
 
-  const skillGroups = [
-    {
-      name: "Technical Skills",
-      skills: [
-        { name: "Machine Learning", level: 78 },
-        { name: "Data Analysis", level: 85 },
-        { name: "Python", level: 92 },
-        { name: "SQL", level: 70 },
-        { name: "Statistical Modeling", level: 65 },
-      ],
-    },
-    {
-      name: "Business Skills",
-      skills: [
-        { name: "Portfolio Management", level: 68 },
-        { name: "Risk Assessment", level: 72 },
-        { name: "Financial Analysis", level: 65 },
-        { name: "Strategic Planning", level: 60 },
-      ],
-    },
-    {
-      name: "Soft Skills",
-      skills: [
-        { name: "Communication", level: 88 },
-        { name: "Problem Solving", level: 82 },
-        { name: "Teamwork", level: 75 },
-        { name: "Leadership", level: 68 },
-      ],
-    },
-  ];
-
-  const learningProgress = [
-    { name: "Jan", progress: 25 },
-    { name: "Feb", progress: 30 },
-    { name: "Mar", progress: 35 },
-    { name: "Apr", progress: 40 },
-    { name: "May", progress: 48 },
-    { name: "Jun", progress: 52 },
-    { name: "Jul", progress: 60 },
-    { name: "Aug", progress: 65 },
-    { name: "Sep", progress: 68 },
-  ];
-
-  const skillDistribution = [
-    { name: "Technical", value: 45 },
-    { name: "Business", value: 30 },
-    { name: "Soft Skills", value: 25 },
-  ];
-
-  const COLORS = ["#3b82f6", "#6366f1", "#8b5cf6"];
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (!userId) return;
+      
+      try {
+        const portfolioData = await getUserSkills(userId);
+        setSkillGroups(portfolioData.skillGroups || []);
+        setLearningProgress(portfolioData.learningProgress || []);
+        setSkillDistribution(portfolioData.skillDistribution || []);
+        setUserDataLoaded(true);
+      } catch (error) {
+        console.error('Failed to load user portfolio data:', error);
+      }
+    };
+    
+    loadUserData();
+  }, [userId, getUserSkills]);
 
   const growthOpportunities = [
     {
@@ -201,10 +175,9 @@ const Portfolio = () => {
     
     setIsGeneratingRecommendations(true);
     try {
-      const recommendations = await getRecommendationsWithToast(userId);
-      console.log('Recommendations:', recommendations);
-      // In a real application, we would display these recommendations
-      // For this demo, we'll just show a toast notification (handled in the API)
+      const personalizedRecommendations = await getRecommendationsWithToast(userId);
+      setRecommendations(personalizedRecommendations);
+      console.log('Personalized recommendations:', personalizedRecommendations);
     } catch (error) {
       console.error('Recommendations error:', error);
     } finally {
@@ -215,13 +188,19 @@ const Portfolio = () => {
   const handleStartAssessment = async () => {
     if (!userId) return;
     
+    setIsStartingAssessment(true);
     try {
       const result = await startAssessmentWithToast(userId);
       console.log('Assessment started:', result);
-      // In a real application, this would redirect to the assessment page
-      // For demo purposes, we'll just log the result
+      
+      if (result.success && result.redirectUrl) {
+        // In a real application, this would redirect to the assessment page
+        navigate(result.redirectUrl);
+      }
     } catch (error) {
       console.error('Assessment error:', error);
+    } finally {
+      setIsStartingAssessment(false);
     }
   };
 
@@ -230,6 +209,8 @@ const Portfolio = () => {
     console.log(`Exploring opportunity ${opportunityId}`);
     navigate(`/courses/${opportunityId}`);
   };
+
+  const COLORS = ["#3b82f6", "#6366f1", "#8b5cf6"];
 
   return (
     <Layout>
@@ -438,12 +419,12 @@ const Portfolio = () => {
                   animate="show"
                   className="grid grid-cols-1 md:grid-cols-3 gap-6"
                 >
-                  {growthOpportunities.map((opportunity) => (
+                  {(recommendations.length > 0 ? recommendations : growthOpportunities).map((opportunity) => (
                     <motion.div key={opportunity.id} variants={item}>
                       <Card className="h-full border border-gray-200 dark:border-gray-800 hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-300">
                         <CardHeader className="pb-2">
                           <div className="flex justify-between items-start">
-                            <CardTitle className="text-lg">{opportunity.skill}</CardTitle>
+                            <CardTitle className="text-lg">{opportunity.title || opportunity.skill}</CardTitle>
                             <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                               {opportunity.match}% Match
                             </Badge>
@@ -455,7 +436,7 @@ const Portfolio = () => {
                           </p>
                           <div className="flex justify-between items-center">
                             <span className="text-sm text-gray-500 dark:text-gray-400">
-                              {opportunity.courses} related courses
+                              {opportunity.type || `${opportunity.courses} related courses`}
                             </span>
                             <Button 
                               size="sm" 
@@ -576,6 +557,8 @@ const Portfolio = () => {
               <Button 
                 className="bg-blue-600 hover:bg-blue-700"
                 onClick={handleStartAssessment}
+                isLoading={isStartingAssessment}
+                loadingText="Setting up..."
               >
                 Start Assessment
               </Button>

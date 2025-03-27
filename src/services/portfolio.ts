@@ -29,6 +29,27 @@ export interface Certification {
   credentialID: string;
 }
 
+export interface Recommendation {
+  id: number;
+  title: string;
+  description: string;
+  match: number;
+  type: string;
+}
+
+export interface Assessment {
+  id: string;
+  title: string;
+  description: string;
+  estimatedDuration: string;
+  focusAreas: string[];
+  questions: {
+    id: number;
+    question: string;
+    skillArea: string;
+  }[];
+}
+
 export const portfolioAPI = {
   // Get user skills portfolio
   getUserSkills: async (userId: string) => {
@@ -212,45 +233,130 @@ export const portfolioAPI = {
   
   // Start skill assessment
   startAssessment: async (userId: string) => {
-    // In a real application, this would set up and return an assessment session
-    // For demo purposes, creating a mock response
-    const assessmentId = `assess_${Date.now()}`;
-    
-    return {
-      success: true,
-      assessmentId,
-      redirectUrl: `/assessment/${assessmentId}`,
-      message: 'Assessment session created successfully'
-    };
+    try {
+      console.log("Starting personalized assessment for user:", userId);
+      
+      // Get user skills for personalization
+      const userSkillsData = await portfolioAPI.getUserSkills(userId);
+      
+      // Call the edge function to get a personalized assessment
+      const { data, error } = await supabase.functions.invoke('personalized-portfolio', {
+        body: { 
+          userId, 
+          requestType: 'assessment',
+          userSkills: userSkillsData
+        }
+      });
+      
+      if (error) {
+        console.error("Error getting personalized assessment:", error);
+        throw error;
+      }
+      
+      console.log("Received personalized assessment:", data);
+      
+      const assessment = data.assessment || {
+        id: `assess_${Date.now()}`,
+        title: "Comprehensive Skills Assessment",
+        description: "This assessment will evaluate your current skills and identify growth opportunities.",
+        redirectUrl: `/assessment/${Date.now()}`
+      };
+      
+      return {
+        success: true,
+        assessmentId: assessment.id,
+        redirectUrl: `/assessment/${assessment.id}`,
+        title: assessment.title,
+        description: assessment.description,
+        estimatedDuration: assessment.estimatedDuration,
+        focusAreas: assessment.focusAreas
+      };
+    } catch (error) {
+      console.error("Error in startAssessment:", error);
+      return {
+        success: false,
+        error: "Failed to create assessment session",
+        assessmentId: `assess_${Date.now()}`,
+        redirectUrl: `/assessment/${Date.now()}`
+      };
+    }
   },
   
   // Get personalized recommendations
   getRecommendations: async (userId: string) => {
-    // In a real application, this would use ML to generate recommendations
-    // For demo purposes, returning mock data
-    return [
-      {
-        id: 1,
-        title: "Advanced Machine Learning Course",
-        description: "Deep dive into neural networks and reinforcement learning",
-        match: 95,
-        type: "course"
-      },
-      {
-        id: 2,
-        title: "Financial Risk Management Certification",
-        description: "Industry-recognized certification for risk professionals",
-        match: 87,
-        type: "certification"
-      },
-      {
-        id: 3,
-        title: "Team Leadership Workshop",
-        description: "Practical skills for leading technical teams",
-        match: 82,
-        type: "workshop"
+    try {
+      console.log("Getting personalized recommendations for user:", userId);
+      
+      // Get user skills for personalization
+      const userSkillsData = await portfolioAPI.getUserSkills(userId);
+      
+      // Call the edge function to get personalized recommendations
+      const { data, error } = await supabase.functions.invoke('personalized-portfolio', {
+        body: { 
+          userId, 
+          requestType: 'recommendations',
+          userSkills: userSkillsData
+        }
+      });
+      
+      if (error) {
+        console.error("Error getting personalized recommendations:", error);
+        throw error;
       }
-    ];
+      
+      console.log("Received personalized recommendations:", data);
+      
+      // Return the recommendations from the edge function or fall back to defaults
+      return data.recommendations || [
+        {
+          id: 1,
+          title: "Advanced Machine Learning Course",
+          description: "Deep dive into neural networks and reinforcement learning",
+          match: 95,
+          type: "course"
+        },
+        {
+          id: 2,
+          title: "Financial Risk Management Certification",
+          description: "Industry-recognized certification for risk professionals",
+          match: 87,
+          type: "certification"
+        },
+        {
+          id: 3,
+          title: "Team Leadership Workshop",
+          description: "Practical skills for leading technical teams",
+          match: 82,
+          type: "workshop"
+        }
+      ];
+    } catch (error) {
+      console.error("Error in getRecommendations:", error);
+      // Return default recommendations if the edge function fails
+      return [
+        {
+          id: 1,
+          title: "Advanced Machine Learning Course",
+          description: "Deep dive into neural networks and reinforcement learning",
+          match: 95,
+          type: "course"
+        },
+        {
+          id: 2,
+          title: "Financial Risk Management Certification",
+          description: "Industry-recognized certification for risk professionals",
+          match: 87,
+          type: "certification"
+        },
+        {
+          id: 3,
+          title: "Team Leadership Workshop",
+          description: "Practical skills for leading technical teams",
+          match: 82,
+          type: "workshop"
+        }
+      ];
+    }
   }
 };
 
@@ -363,17 +469,25 @@ export const usePortfolioAPI = () => {
       try {
         toast({
           title: "Setting Up Assessment",
-          description: "Preparing your skills assessment...",
+          description: "Preparing your personalized skills assessment...",
           variant: "default",
         });
         
         const result = await portfolioAPI.startAssessment(userId);
         
-        toast({
-          title: "Assessment Ready",
-          description: "Your skills assessment has been created. You can begin now.",
-          variant: "default",
-        });
+        if (result.success) {
+          toast({
+            title: "Assessment Ready",
+            description: "Your personalized skills assessment has been created. You can begin now.",
+            variant: "default",
+          });
+        } else {
+          toast({
+            title: "Setup Failed",
+            description: result.error || "There was a problem setting up your assessment.",
+            variant: "destructive",
+          });
+        }
         
         return result;
       } catch (error) {
