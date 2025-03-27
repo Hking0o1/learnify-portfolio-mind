@@ -203,6 +203,58 @@ export type Database = {
           },
         ]
       }
+      user_progress: {
+        Row: {
+          course_id: string
+          id: string
+          last_accessed: string
+          last_material_id: string | null
+          last_module_id: string | null
+          progress_percentage: number
+          user_id: string
+        }
+        Insert: {
+          course_id: string
+          id?: string
+          last_accessed?: string
+          last_material_id?: string | null
+          last_module_id?: string | null
+          progress_percentage?: number
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          id?: string
+          last_accessed?: string
+          last_material_id?: string | null
+          last_module_id?: string | null
+          progress_percentage?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_course"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_material"
+            columns: ["last_material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_module"
+            columns: ["last_module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

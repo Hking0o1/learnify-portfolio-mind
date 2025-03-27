@@ -44,7 +44,12 @@ export const progressAPI = {
       // Get the most recently accessed course
       const { data, error } = await supabase
         .from('user_progress')
-        .select('*, courses(*), modules(*), materials(*)')
+        .select(`
+          *,
+          courses:course_id(title),
+          modules:last_module_id(id),
+          materials:last_material_id(id)
+        `)
         .eq('user_id', userId)
         .order('last_accessed', { ascending: false })
         .limit(1)
@@ -108,7 +113,7 @@ export const useProgressAPI = () => {
         console.error("Error resuming learning:", error);
         toast({
           title: "Error",
-          description: error.message || "Failed to resume learning",
+          description: "Failed to resume learning",
           variant: "destructive",
         });
         throw error;

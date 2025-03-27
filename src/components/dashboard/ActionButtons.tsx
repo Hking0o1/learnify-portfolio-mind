@@ -18,18 +18,18 @@ export function ActionButtons() {
   const [isLoadingResume, setIsLoadingResume] = useState(false);
   const { inviteFriendWithToast } = useInviteAPI();
   const { resumeLearningWithToast } = useProgressAPI();
-  const { user } = useUserAuth();
+  const { userId } = useUserAuth();
   const navigate = useNavigate();
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inviteEmail || !user?.id) return;
+    if (!inviteEmail || !userId) return;
     
     setIsSending(true);
     try {
       await inviteFriendWithToast({
         email: inviteEmail,
-        sender_id: user.id,
+        sender_id: userId,
         message: inviteMessage
       });
       setInviteEmail('');
@@ -42,11 +42,11 @@ export function ActionButtons() {
   };
 
   const handleResumeLearning = async () => {
-    if (!user?.id) return;
+    if (!userId) return;
     
     setIsLoadingResume(true);
     try {
-      const learningData = await resumeLearningWithToast(user.id);
+      const learningData = await resumeLearningWithToast(userId);
       navigate(`/courses/${learningData.course_id}`);
     } catch (error) {
       console.error('Failed to resume learning:', error);
