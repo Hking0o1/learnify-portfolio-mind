@@ -62,7 +62,7 @@ export const saveGeneratedModules = async (courseId: string, generatedModules: G
       // Create materials for this module
       if (moduleData.materials && moduleData.materials.length > 0) {
         const materialsToInsert = moduleData.materials.map((material, index) => ({
-          title: material.title,
+          title: material.title, // Title is required
           type: material.type || 'document',
           content: material.content,
           position: index,

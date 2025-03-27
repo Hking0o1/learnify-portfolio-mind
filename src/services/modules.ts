@@ -83,7 +83,7 @@ export const moduleAPI = {
   },
 
   // Add material to a module
-  addMaterial: async (moduleId: string, materialData: Partial<Material>) => {
+  addMaterial: async (moduleId: string, materialData: Omit<Material, 'module_id'>) => {
     const { data, error } = await supabase
       .from('materials')
       .insert([{ ...materialData, module_id: moduleId }])
@@ -197,7 +197,7 @@ export const useModuleAPI = () => {
     },
     
     // Add material with toast
-    addMaterialWithToast: async (moduleId: string, materialData: Partial<Material>) => {
+    addMaterialWithToast: async (moduleId: string, materialData: Omit<Material, 'module_id'>) => {
       try {
         const result = await moduleAPI.addMaterial(moduleId, materialData);
         toast({
