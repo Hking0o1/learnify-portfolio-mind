@@ -1,3 +1,4 @@
+
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -13,14 +14,22 @@ import {
   TrendingUp,
   Trophy,
   UserPlus,
+  ArrowRight,
+  CheckCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ActionButtons } from "@/components/dashboard/ActionButtons";
+import { useUserAuth } from "@/contexts/AuthContext";
+import { useProgressAPI } from "@/services/progress";
 
 const Dashboard = () => {
+  const { userId } = useUserAuth();
+  const navigate = useNavigate();
+  const { enrollInCourseWithToast } = useProgressAPI();
+
   const courses = [
     {
       id: 1,
@@ -165,6 +174,24 @@ const Dashboard = () => {
     show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
   };
 
+  const handleContinueCourse = (courseId: number) => {
+    navigate(`/courses/${courseId}`);
+  };
+
+  const handleEnrollCourse = async (courseId: number) => {
+    if (!userId) {
+      navigate('/signin');
+      return;
+    }
+
+    try {
+      await enrollInCourseWithToast(userId, courseId.toString());
+      navigate(`/courses/${courseId}`);
+    } catch (error) {
+      console.error('Failed to enroll in course:', error);
+    }
+  };
+
   return (
     <Layout>
       <div className="space-y-8">
@@ -265,7 +292,9 @@ const Dashboard = () => {
                         <Button
                           size="sm"
                           className="bg-blue-600 hover:bg-blue-700"
+                          onClick={() => handleContinueCourse(course.id)}
                         >
+                          <ArrowRight className="h-4 w-4 mr-1" />
                           Continue
                         </Button>
                       </div>
@@ -310,8 +339,10 @@ const Dashboard = () => {
                       <div className="flex justify-end">
                         <Button
                           size="sm"
-                          className="bg-blue-600 hover:bg-blue-700"
+                          className="bg-green-600 hover:bg-green-700"
+                          onClick={() => handleEnrollCourse(course.id)}
                         >
+                          <CheckCircle className="h-4 w-4 mr-1" />
                           Enroll Now
                         </Button>
                       </div>

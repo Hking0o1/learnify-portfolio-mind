@@ -4,4 +4,4 @@ export { courseAPI, userAPI, useAPI } from './supabase';
 export { moduleAPI, useModuleAPI } from './modules';
 export { generateModulesWithAI, saveGeneratedModules } from './ai-modules';
 export { inviteAPI, useInviteAPI } from './invites';
-export { progressAPI, useProgressAPI } from './progress';
+export { progressAPI, useProgressAPI, type UserProgress } from './progress';

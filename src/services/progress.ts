@@ -45,10 +45,14 @@ export const progressAPI = {
       const { data, error } = await supabase
         .from('user_progress')
         .select(`
-          *,
-          courses:course_id(title),
-          modules:last_module_id(id),
-          materials:last_material_id(id)
+          id,
+          user_id,
+          course_id,
+          last_module_id,
+          last_material_id,
+          progress_percentage,
+          last_accessed,
+          courses:course_id(title)
         `)
         .eq('user_id', userId)
         .order('last_accessed', { ascending: false })
@@ -94,6 +98,25 @@ export const progressAPI = {
     
     if (error) throw error;
     return data[0];
+  },
+
+  // Enroll user in a course
+  enrollInCourse: async (userId: string, courseId: string) => {
+    // Create initial progress record for the course
+    const progressData: UserProgress = {
+      user_id: userId,
+      course_id: courseId,
+      progress_percentage: 0,
+      last_accessed: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('user_progress')
+      .upsert(progressData)
+      .select();
+
+    if (error) throw error;
+    return data[0];
   }
 };
 
@@ -114,6 +137,27 @@ export const useProgressAPI = () => {
         toast({
           title: "Error",
           description: "Failed to resume learning",
+          variant: "destructive",
+        });
+        throw error;
+      }
+    },
+
+    // Enroll in course with toast
+    enrollInCourseWithToast: async (userId: string, courseId: string) => {
+      try {
+        const result = await progressAPI.enrollInCourse(userId, courseId);
+        toast({
+          title: "Success",
+          description: "Successfully enrolled in the course",
+          variant: "default",
+        });
+        return result;
+      } catch (error) {
+        console.error("Error enrolling in course:", error);
+        toast({
+          title: "Error",
+          description: "Failed to enroll in the course",
           variant: "destructive",
         });
         throw error;
