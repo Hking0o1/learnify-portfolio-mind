@@ -1,4 +1,3 @@
-
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -19,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ActionButtons } from "@/components/dashboard/ActionButtons";
 
 const Dashboard = () => {
   const courses = [
@@ -150,7 +150,6 @@ const Dashboard = () => {
     },
   ];
 
-  // Animation variants
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -176,16 +175,7 @@ const Dashboard = () => {
               Welcome back, John! Here's what's happening with your learning journey.
             </p>
           </div>
-          <div className="flex space-x-2">
-            <Button variant="outline" className="flex items-center gap-2">
-              <UserPlus className="h-4 w-4" />
-              Invite Friends
-            </Button>
-            <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-              <Play className="h-4 w-4" />
-              Resume Learning
-            </Button>
-          </div>
+          <ActionButtons />
         </div>
 
         <motion.div
