@@ -1,4 +1,3 @@
-
 import { Layout } from "@/components/layout/Layout";
 import {
   Card,
@@ -20,14 +19,32 @@ import {
   Sparkles,
   Target,
   Zap,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { PieChart, Pie, Cell, ResponsiveContainer, AreaChart as RechartArea, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart as RechartBar, Bar } from "recharts";
+import { usePortfolioAPI } from "@/services/api";
+import { useUserAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Portfolio = () => {
+  const { userId } = useUserAuth();
+  const navigate = useNavigate();
+  const { 
+    exportPortfolioWithToast,
+    sharePortfolioWithToast,
+    getRecommendationsWithToast,
+    startAssessmentWithToast
+  } = usePortfolioAPI();
+  
+  const [isExporting, setIsExporting] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false);
+
   const skillGroups = [
     {
       name: "Technical Skills",
@@ -151,6 +168,69 @@ const Portfolio = () => {
     show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
   };
 
+  // Button handlers
+  const handleExportPortfolio = async (format: 'pdf' | 'json') => {
+    if (!userId) return;
+    
+    setIsExporting(true);
+    try {
+      await exportPortfolioWithToast(userId, format);
+    } catch (error) {
+      console.error('Export error:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleSharePortfolio = async () => {
+    if (!userId) return;
+    
+    setIsSharing(true);
+    try {
+      // For simplicity, just sharing via URL
+      await sharePortfolioWithToast(userId, 'url');
+    } catch (error) {
+      console.error('Share error:', error);
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const handleGetRecommendations = async () => {
+    if (!userId) return;
+    
+    setIsGeneratingRecommendations(true);
+    try {
+      const recommendations = await getRecommendationsWithToast(userId);
+      console.log('Recommendations:', recommendations);
+      // In a real application, we would display these recommendations
+      // For this demo, we'll just show a toast notification (handled in the API)
+    } catch (error) {
+      console.error('Recommendations error:', error);
+    } finally {
+      setIsGeneratingRecommendations(false);
+    }
+  };
+
+  const handleStartAssessment = async () => {
+    if (!userId) return;
+    
+    try {
+      const result = await startAssessmentWithToast(userId);
+      console.log('Assessment started:', result);
+      // In a real application, this would redirect to the assessment page
+      // For demo purposes, we'll just log the result
+    } catch (error) {
+      console.error('Assessment error:', error);
+    }
+  };
+
+  const handleExploreOpportunity = (opportunityId: number) => {
+    // In a real application, this would navigate to course details
+    console.log(`Exploring opportunity ${opportunityId}`);
+    navigate(`/courses/${opportunityId}`);
+  };
+
   return (
     <Layout>
       <div className="space-y-8">
@@ -162,15 +242,32 @@ const Portfolio = () => {
             </p>
           </div>
           <div className="flex space-x-2">
-            <Button variant="outline" className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => handleExportPortfolio('pdf')}
+              isLoading={isExporting}
+              loadingText="Exporting..."
+            >
               <Download className="h-4 w-4" />
               Export
             </Button>
-            <Button variant="outline" className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={handleSharePortfolio}
+              isLoading={isSharing}
+              loadingText="Sharing..."
+            >
               <Share2 className="h-4 w-4" />
               Share
             </Button>
-            <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+            <Button 
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+              onClick={handleGetRecommendations}
+              isLoading={isGeneratingRecommendations}
+              loadingText="Generating..."
+            >
               <Sparkles className="h-4 w-4" />
               Get Recommendations
             </Button>
@@ -341,7 +438,7 @@ const Portfolio = () => {
                   animate="show"
                   className="grid grid-cols-1 md:grid-cols-3 gap-6"
                 >
-                  {growthOpportunities.map((opportunity, index) => (
+                  {growthOpportunities.map((opportunity) => (
                     <motion.div key={opportunity.id} variants={item}>
                       <Card className="h-full border border-gray-200 dark:border-gray-800 hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-300">
                         <CardHeader className="pb-2">
@@ -360,7 +457,12 @@ const Portfolio = () => {
                             <span className="text-sm text-gray-500 dark:text-gray-400">
                               {opportunity.courses} related courses
                             </span>
-                            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                            <Button 
+                              size="sm" 
+                              className="bg-blue-600 hover:bg-blue-700"
+                              onClick={() => handleExploreOpportunity(opportunity.id)}
+                            >
+                              <ArrowRight className="h-4 w-4 mr-1" />
                               Explore
                             </Button>
                           </div>
@@ -471,7 +573,10 @@ const Portfolio = () => {
               <p className="text-gray-600 dark:text-gray-300 mb-4">
                 Complete your portfolio assessment to receive personalized recommendations for courses, projects, and career paths.
               </p>
-              <Button className="bg-blue-600 hover:bg-blue-700">
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={handleStartAssessment}
+              >
                 Start Assessment
               </Button>
             </div>
