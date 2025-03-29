@@ -1,3 +1,4 @@
+
 import { Layout } from "@/components/layout/Layout";
 import {
   Card,
@@ -25,12 +26,13 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { PieChart, Pie, Cell, ResponsiveContainer, AreaChart as RechartArea, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart as RechartBar, Bar } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, AreaChart as RechartArea, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart as RechartBar, Bar, LineChart as RechartLine, Line } from "recharts";
 import { usePortfolioAPI } from "@/services/api";
 import { useUserAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { type Recommendation } from "@/services/portfolio";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const Portfolio = () => {
   const { userId } = useUserAuth();
@@ -52,6 +54,9 @@ const Portfolio = () => {
   const [skillDistribution, setSkillDistribution] = useState([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [userDataLoaded, setUserDataLoaded] = useState(false);
+  const [selectedChartType, setSelectedChartType] = useState<'line' | 'area' | 'bar'>('area');
+  const [selectedCertification, setSelectedCertification] = useState(null);
+  const [certDialogOpen, setCertDialogOpen] = useState(false);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -102,6 +107,11 @@ const Portfolio = () => {
       issuer: "Data Science Academy",
       date: "June 2023",
       credentialID: "ML-2023-078",
+      image: "/placeholder.svg",
+      description: "This certification validates expertise in machine learning algorithms, model evaluation, and practical implementation of ML solutions.",
+      skills: ["Neural Networks", "Data Preprocessing", "Model Evaluation", "Python"],
+      issueDate: "2023-06-15",
+      expiryDate: "2026-06-15"
     },
     {
       id: 2,
@@ -109,6 +119,11 @@ const Portfolio = () => {
       issuer: "Finance Institute",
       date: "February 2023",
       credentialID: "FPA-2023-124",
+      image: "/placeholder.svg",
+      description: "Demonstrates proficiency in analyzing financial portfolios, risk assessment, and investment strategies.",
+      skills: ["Financial Modeling", "Risk Analysis", "Asset Allocation", "Statistical Analysis"],
+      issueDate: "2023-02-10",
+      expiryDate: "2026-02-10"
     },
     {
       id: 3,
@@ -116,6 +131,11 @@ const Portfolio = () => {
       issuer: "Analytics Association",
       date: "November 2022",
       credentialID: "ADA-2022-342",
+      image: "/placeholder.svg", 
+      description: "Certifies advanced knowledge in data analysis methodologies, statistical techniques, and data visualization.",
+      skills: ["Statistical Modeling", "Data Visualization", "Hypothesis Testing", "R Programming"],
+      issueDate: "2022-11-05",
+      expiryDate: "2025-11-05"
     },
   ];
 
@@ -195,7 +215,6 @@ const Portfolio = () => {
       console.log('Assessment started:', result);
       
       if (result.success && result.redirectUrl) {
-        // In a real application, this would redirect to the assessment page
         navigate(result.redirectUrl);
       }
     } catch (error) {
@@ -206,12 +225,92 @@ const Portfolio = () => {
   };
 
   const handleExploreOpportunity = (opportunityId: number) => {
-    // In a real application, this would navigate to course details
     console.log(`Exploring opportunity ${opportunityId}`);
     navigate(`/courses/${opportunityId}`);
   };
+  
+  const handleViewCertification = (cert) => {
+    setSelectedCertification(cert);
+    setCertDialogOpen(true);
+  };
 
   const COLORS = ["#3b82f6", "#6366f1", "#8b5cf6"];
+
+  // Render chart based on selected type
+  const renderLearningProgressChart = () => {
+    switch (selectedChartType) {
+      case 'line':
+        return (
+          <RechartLine
+            data={learningProgress}
+            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+            <XAxis dataKey="name" />
+            <YAxis domain={[0, 100]} />
+            <Tooltip />
+            <Legend />
+            <Line
+              type="monotone" 
+              dataKey="progress"
+              name="Skill Progress"
+              stroke="#3b82f6"
+              strokeWidth={2}
+              dot={{ r: 4, fill: "#3b82f6" }}
+              activeDot={{ r: 6 }}
+            />
+          </RechartLine>
+        );
+      case 'bar':
+        return (
+          <RechartBar
+            data={learningProgress}
+            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+            <XAxis dataKey="name" />
+            <YAxis domain={[0, 100]} />
+            <Tooltip />
+            <Legend />
+            <Bar 
+              dataKey="progress" 
+              name="Skill Progress" 
+              fill="#3b82f6"
+              radius={[4, 4, 0, 0]}
+            />
+          </RechartBar>
+        );
+      case 'area':
+      default:
+        return (
+          <RechartArea
+            data={learningProgress}
+            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+          >
+            <defs>
+              <linearGradient id="progressGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+            <XAxis dataKey="name" />
+            <YAxis domain={[0, 100]} />
+            <Tooltip />
+            <Legend />
+            <Area
+              type="monotone"
+              dataKey="progress"
+              name="Skill Progress"
+              stroke="#3b82f6"
+              strokeWidth={2}
+              fillOpacity={1}
+              fill="url(#progressGradient)"
+            />
+          </RechartArea>
+        );
+    }
+  };
 
   return (
     <Layout>
@@ -345,15 +444,30 @@ const Portfolio = () => {
                   </CardDescription>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="h-8">
+                  <Button 
+                    variant={selectedChartType === 'line' ? 'default' : 'outline'} 
+                    size="sm" 
+                    className={`h-8 ${selectedChartType === 'line' ? 'bg-blue-600' : ''}`}
+                    onClick={() => setSelectedChartType('line')}
+                  >
                     <LineChart className="h-4 w-4 mr-1" />
                     Line
                   </Button>
-                  <Button variant="outline" size="sm" className="h-8">
+                  <Button 
+                    variant={selectedChartType === 'area' ? 'default' : 'outline'} 
+                    size="sm" 
+                    className={`h-8 ${selectedChartType === 'area' ? 'bg-blue-600' : ''}`}
+                    onClick={() => setSelectedChartType('area')}
+                  >
                     <AreaChart className="h-4 w-4 mr-1" />
                     Area
                   </Button>
-                  <Button variant="outline" size="sm" className="h-8">
+                  <Button 
+                    variant={selectedChartType === 'bar' ? 'default' : 'outline'} 
+                    size="sm" 
+                    className={`h-8 ${selectedChartType === 'bar' ? 'bg-blue-600' : ''}`}
+                    onClick={() => setSelectedChartType('bar')}
+                  >
                     <BarChart className="h-4 w-4 mr-1" />
                     Bar
                   </Button>
@@ -362,29 +476,7 @@ const Portfolio = () => {
             </CardHeader>
             <CardContent className="pt-0 h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <RechartArea
-                  data={learningProgress}
-                  margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient id="progressGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="name" />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <Area
-                    type="monotone"
-                    dataKey="progress"
-                    stroke="#3b82f6"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#progressGradient)"
-                  />
-                </RechartArea>
+                {renderLearningProgressChart()}
               </ResponsiveContainer>
             </CardContent>
           </Card>
@@ -492,7 +584,11 @@ const Portfolio = () => {
                           Credential ID: {cert.credentialID}
                         </p>
                       </div>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleViewCertification(cert)}
+                      >
                         <FileText className="h-4 w-4 mr-1" />
                         View
                       </Button>
@@ -567,6 +663,76 @@ const Portfolio = () => {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Certification View Dialog */}
+      <Dialog open={certDialogOpen} onOpenChange={setCertDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          {selectedCertification && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-xl">{selectedCertification.name}</DialogTitle>
+                <DialogDescription>
+                  Issued by {selectedCertification.issuer} on {selectedCertification.date}
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                <div className="flex justify-center p-4 bg-gray-50 dark:bg-gray-800 rounded-md">
+                  <img 
+                    src={selectedCertification.image} 
+                    alt={`${selectedCertification.name} Certificate`}
+                    className="h-48 object-contain"
+                  />
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium mb-1">Description</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    {selectedCertification.description}
+                  </p>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium mb-1">Skills Validated</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedCertification.skills.map((skill, i) => (
+                      <Badge key={i} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div>
+                    <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400">Issue Date</h4>
+                    <p className="text-sm">{selectedCertification.issueDate}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400">Expiry Date</h4>
+                    <p className="text-sm">{selectedCertification.expiryDate}</p>
+                  </div>
+                </div>
+                
+                <div className="pt-2">
+                  <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400">Credential ID</h4>
+                  <p className="text-sm font-mono">{selectedCertification.credentialID}</p>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-2 mt-4">
+                <Button variant="outline" onClick={() => setCertDialogOpen(false)}>
+                  Close
+                </Button>
+                <Button>
+                  <Download className="h-4 w-4 mr-1" />
+                  Download
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };

@@ -1,3 +1,4 @@
+
 import { Layout } from "@/components/layout/Layout";
 import {
   Card,
@@ -31,18 +32,43 @@ import {
   Scatter,
   ZAxis,
 } from "recharts";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useUserAuth } from "@/contexts/AuthContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { format, subDays } from "date-fns";
+
+// Utility function to filter data by date range
+const filterDataByDays = (data, days) => {
+  if (!data || data.length === 0) return [];
+  if (days <= 0) return data;
+  
+  // For demo purposes, we'll simulate filtering by returning a subset of data
+  return data.slice(-days);
+};
 
 const Analytics = () => {
+  const { toast } = useToast();
+  const { userId } = useUserAuth();
+  const [timeRange, setTimeRange] = useState(30); // Default 30 days
+  const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [insightsDialogOpen, setInsightsDialogOpen] = useState(false);
+  const [generatedInsights, setGeneratedInsights] = useState(null);
+
   // Learning time data
   const learningTimeData = [
-    { name: "Mon", minutes: 45 },
-    { name: "Tue", minutes: 30 },
-    { name: "Wed", minutes: 60 },
-    { name: "Thu", minutes: 90 },
-    { name: "Fri", minutes: 75 },
-    { name: "Sat", minutes: 120 },
-    { name: "Sun", minutes: 40 },
+    { name: "Mon", minutes: 45, date: format(subDays(new Date(), 6), 'yyyy-MM-dd') },
+    { name: "Tue", minutes: 30, date: format(subDays(new Date(), 5), 'yyyy-MM-dd') },
+    { name: "Wed", minutes: 60, date: format(subDays(new Date(), 4), 'yyyy-MM-dd') },
+    { name: "Thu", minutes: 90, date: format(subDays(new Date(), 3), 'yyyy-MM-dd') },
+    { name: "Fri", minutes: 75, date: format(subDays(new Date(), 2), 'yyyy-MM-dd') },
+    { name: "Sat", minutes: 120, date: format(subDays(new Date(), 1), 'yyyy-MM-dd') },
+    { name: "Sun", minutes: 40, date: format(new Date(), 'yyyy-MM-dd') },
   ];
+
+  // Filter data based on selected time range
+  const filteredLearningTimeData = filterDataByDays(learningTimeData, timeRange);
 
   // Progress by subject data
   const subjectProgressData = [
@@ -117,28 +143,34 @@ const Analytics = () => {
 
   // Track days data
   const streakData = [
-    { name: "Week 1", streak: 5 },
-    { name: "Week 2", streak: 7 },
-    { name: "Week 3", streak: 4 },
-    { name: "Week 4", streak: 6 },
-    { name: "Week 5", streak: 7 },
-    { name: "Week 6", streak: 5 },
-    { name: "Week 7", streak: 6 },
-    { name: "Week 8", streak: 7 },
+    { name: "Week 1", streak: 5, date: format(subDays(new Date(), 56), 'yyyy-MM-dd') },
+    { name: "Week 2", streak: 7, date: format(subDays(new Date(), 49), 'yyyy-MM-dd') },
+    { name: "Week 3", streak: 4, date: format(subDays(new Date(), 42), 'yyyy-MM-dd') },
+    { name: "Week 4", streak: 6, date: format(subDays(new Date(), 35), 'yyyy-MM-dd') },
+    { name: "Week 5", streak: 7, date: format(subDays(new Date(), 28), 'yyyy-MM-dd') },
+    { name: "Week 6", streak: 5, date: format(subDays(new Date(), 21), 'yyyy-MM-dd') },
+    { name: "Week 7", streak: 6, date: format(subDays(new Date(), 14), 'yyyy-MM-dd') },
+    { name: "Week 8", streak: 7, date: format(subDays(new Date(), 7), 'yyyy-MM-dd') },
   ];
+
+  // Filter streak data based on selected time range
+  const filteredStreakData = filterDataByDays(streakData, timeRange);
 
   // Completion rate data
   const completionRateData = [
-    { name: "Jan", rate: 65 },
-    { name: "Feb", rate: 70 },
-    { name: "Mar", rate: 68 },
-    { name: "Apr", rate: 75 },
-    { name: "May", rate: 82 },
-    { name: "Jun", rate: 78 },
-    { name: "Jul", rate: 85 },
-    { name: "Aug", rate: 88 },
-    { name: "Sep", rate: 90 },
+    { name: "Jan", rate: 65, date: format(subDays(new Date(), 270), 'yyyy-MM-dd') },
+    { name: "Feb", rate: 70, date: format(subDays(new Date(), 240), 'yyyy-MM-dd') },
+    { name: "Mar", rate: 68, date: format(subDays(new Date(), 210), 'yyyy-MM-dd') },
+    { name: "Apr", rate: 75, date: format(subDays(new Date(), 180), 'yyyy-MM-dd') },
+    { name: "May", rate: 82, date: format(subDays(new Date(), 150), 'yyyy-MM-dd') },
+    { name: "Jun", rate: 78, date: format(subDays(new Date(), 120), 'yyyy-MM-dd') },
+    { name: "Jul", rate: 85, date: format(subDays(new Date(), 90), 'yyyy-MM-dd') },
+    { name: "Aug", rate: 88, date: format(subDays(new Date(), 60), 'yyyy-MM-dd') },
+    { name: "Sep", rate: 90, date: format(subDays(new Date(), 30), 'yyyy-MM-dd') },
   ];
+
+  // Filter completion rate data
+  const filteredCompletionRateData = filterDataByDays(completionRateData, timeRange);
 
   // Animation variants
   const container = {
@@ -160,6 +192,96 @@ const Analytics = () => {
   const dayOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const dayValue = (day: string) => dayOrder.indexOf(day) + 1;
 
+  // Handler for changing time range
+  const handleTimeRangeChange = (days) => {
+    setTimeRange(days);
+    toast({
+      title: `Showing data for last ${days} days`,
+      description: `Analytics view updated with data from ${format(subDays(new Date(), days), 'MMM dd, yyyy')} to ${format(new Date(), 'MMM dd, yyyy')}`,
+    });
+  };
+
+  // Handler for sharing analytics
+  const handleShareAnalytics = async () => {
+    setIsSharing(true);
+    try {
+      // In a real app, this would generate a shareable URL or export to PDF
+      const shareableUrl = `https://example.com/shared-analytics/${userId}?token=${Date.now()}`;
+      
+      // Copy URL to clipboard
+      await navigator.clipboard.writeText(shareableUrl);
+      
+      toast({
+        title: "Analytics Shared",
+        description: "Shareable link has been copied to your clipboard",
+      });
+    } catch (error) {
+      console.error('Error sharing analytics:', error);
+      toast({
+        variant: "destructive",
+        title: "Share Failed",
+        description: "There was a problem generating your shareable link",
+      });
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  // Handler for generating insights
+  const handleGenerateInsights = async () => {
+    setIsGeneratingInsights(true);
+    try {
+      // Simulate AI processing
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Generate personalized insights based on the data
+      const insights = {
+        optimalLearningTime: {
+          title: "Optimal Learning Times",
+          description: "Your data shows you're most productive between 9-11 AM and 3-5 PM. Consider scheduling challenging courses during these times for optimal retention.",
+          priority: "high"
+        },
+        skillGaps: {
+          title: "Skill Gap Analysis",
+          description: "While you excel in Data Analysis (85%) and Machine Learning (78%), your Risk Assessment skills (68%) could use improvement. Consider focusing on risk management courses to balance your skill portfolio.",
+          priority: "medium"
+        },
+        learningPattern: {
+          title: "Learning Style Analysis",
+          description: "Your engagement patterns suggest you learn best through visual and interactive content. We recommend courses with simulations and practical exercises for better engagement.",
+          priority: "high"
+        },
+        consistencyMetric: {
+          title: "Consistency Improvements",
+          description: "Your learning consistency has improved by 35% in the last month. Keep up the regular study sessions as they're proving effective for your retention and progress.",
+          priority: "medium"
+        },
+        growthOpportunity: {
+          title: "Growth Opportunity",
+          description: "Based on your portfolio goals and current skill trends, focusing on advanced risk assessment techniques would complement your existing strengths in data analysis and machine learning.",
+          priority: "high"
+        }
+      };
+      
+      setGeneratedInsights(insights);
+      setInsightsDialogOpen(true);
+      
+      toast({
+        title: "AI Insights Generated",
+        description: "Personalized insights based on your learning patterns are ready",
+      });
+    } catch (error) {
+      console.error('Error generating insights:', error);
+      toast({
+        variant: "destructive",
+        title: "Insights Generation Failed",
+        description: "There was a problem analyzing your learning data",
+      });
+    } finally {
+      setIsGeneratingInsights(false);
+    }
+  };
+
   return (
     <Layout>
       <div className="space-y-8">
@@ -171,15 +293,38 @@ const Analytics = () => {
             </p>
           </div>
           <div className="flex space-x-2">
-            <Button variant="outline" className="flex items-center gap-2">
+            <Button 
+              variant={timeRange === 30 ? "default" : "outline"} 
+              className={`flex items-center gap-2 ${timeRange === 30 ? "bg-blue-600" : ""}`}
+              onClick={() => handleTimeRangeChange(30)}
+            >
               <Calendar className="h-4 w-4" />
               Last 30 Days
             </Button>
-            <Button variant="outline" className="flex items-center gap-2">
+            <Button 
+              variant={timeRange === 90 ? "default" : "outline"}
+              className={`flex items-center gap-2 ${timeRange === 90 ? "bg-blue-600" : ""}`}
+              onClick={() => handleTimeRangeChange(90)}
+            >
+              <Calendar className="h-4 w-4" />
+              Last 90 Days
+            </Button>
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={handleShareAnalytics}
+              isLoading={isSharing}
+              loadingText="Sharing..."
+            >
               <Share2 className="h-4 w-4" />
               Share
             </Button>
-            <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+            <Button 
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+              onClick={handleGenerateInsights}
+              isLoading={isGeneratingInsights}
+              loadingText="Analyzing..."
+            >
               <Zap className="h-4 w-4" />
               Get Insights
             </Button>
@@ -208,7 +353,7 @@ const Analytics = () => {
               <CardContent className="pt-0 h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={learningTimeData}
+                    data={filteredLearningTimeData}
                     margin={{
                       top: 20,
                       right: 30,
@@ -250,7 +395,7 @@ const Analytics = () => {
               <CardContent className="pt-0 h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
-                    data={streakData}
+                    data={filteredStreakData}
                     margin={{
                       top: 20,
                       right: 30,
@@ -360,7 +505,7 @@ const Analytics = () => {
                   <CardContent className="pt-0 h-80">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart
-                        data={completionRateData}
+                        data={filteredCompletionRateData}
                         margin={{
                           top: 20,
                           right: 30,
@@ -557,6 +702,60 @@ const Analytics = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* AI Insights Dialog */}
+      <Dialog open={insightsDialogOpen} onOpenChange={setInsightsDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>AI-Generated Learning Insights</DialogTitle>
+            <DialogDescription>
+              Personalized recommendations based on your learning patterns and progress
+            </DialogDescription>
+          </DialogHeader>
+          
+          {generatedInsights && (
+            <div className="space-y-6 mt-4">
+              {Object.entries(generatedInsights).map(([key, insight]) => (
+                <div 
+                  key={key}
+                  className={`p-4 rounded-lg ${
+                    insight.priority === 'high' 
+                      ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' 
+                      : 'bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-medium">
+                      {insight.title}
+                    </h3>
+                    {insight.priority === 'high' && (
+                      <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        High Priority
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="mt-2 text-gray-700 dark:text-gray-300">
+                    {insight.description}
+                  </p>
+                </div>
+              ))}
+
+              <div className="flex justify-end gap-4 pt-4">
+                <Button 
+                  variant="outline"
+                  onClick={() => setInsightsDialogOpen(false)}
+                >
+                  Close
+                </Button>
+                <Button>
+                  <Share2 className="h-4 w-4 mr-1" />
+                  Share Insights
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
