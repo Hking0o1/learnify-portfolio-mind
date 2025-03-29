@@ -37,7 +37,7 @@ const formSchema = z.object({
 const AddCourse = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { isInstructor } = useUserAuth();
+  const { isInstructor, user } = useUserAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { withToast } = useAPI();
 
@@ -62,6 +62,8 @@ const AddCourse = () => {
       const courseData = {
         ...values,
         price: parseFloat(values.price),
+        instructor_id: user?.id, // Add the instructor's user ID
+        status: "Draft", // Set initial status as Draft
       };
       
       // Call the API service

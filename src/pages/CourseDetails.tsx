@@ -10,11 +10,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import { ArrowLeft, BookOpen, Check, FileText, Folder, Play, PlusCircle, Trophy } from "lucide-react";
+import { ArrowLeft, BookOpen, Check, FileText, Folder, Play, PlusCircle, Trophy, FileVideo } from "lucide-react";
 import { useUserAuth } from "@/contexts/AuthContext";
+import marked from 'marked';
 
 // Define specific string literals for material types
-type MaterialType = "video" | "document" | "quiz";
+type MaterialType = "video" | "document" | "quiz" | "summary" | "exercise";
 
 // Define interfaces with proper types
 interface Material {
@@ -24,6 +25,7 @@ interface Material {
   url: string;
   duration?: string;
   isCompleted: boolean;
+  content?: string; // New field for blog-style content
 }
 
 interface Module {
@@ -268,56 +270,26 @@ const CourseDetails = () => {
     }
   };
 
-  const renderMaterialContent = () => {
-    if (!activeMaterial) return null;
-
-    switch (activeMaterial.type) {
-      case "video":
-        return (
-          <div className="aspect-video bg-black rounded-lg overflow-hidden">
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="text-center">
-                <Play className="h-16 w-16 text-primary/60 mb-4" />
-                <p className="text-white">Video: {activeMaterial.title}</p>
-                {activeMaterial.duration && (
-                  <p className="text-gray-400 text-sm mt-2">Duration: {activeMaterial.duration}</p>
-                )}
-              </div>
-            </div>
+  const renderMaterialContent = (material) => {
+    if (material.type === 'document' || material.type === 'summary' || material.type === 'exercise') {
+      return (
+        <div className="prose prose-sm dark:prose-invert max-w-none">
+          <div dangerouslySetInnerHTML={{ __html: marked.parse(material.content || '') }} />
+        </div>
+      );
+    } else if (material.type === 'video') {
+      return (
+        <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+          <div className="flex items-center justify-center h-full">
+            <FileVideo className="h-10 w-10 text-muted-foreground" />
+            <span className="ml-2">Video content would appear here</span>
           </div>
-        );
-      case "document":
-        return (
-          <div className="rounded-lg overflow-hidden border border-border p-6">
-            <div className="flex items-center mb-4">
-              <FileText className="h-8 w-8 text-blue-500 mr-3" />
-              <h3 className="text-xl font-medium">{activeMaterial.title}</h3>
-            </div>
-            <p className="text-muted-foreground">
-              This is a document resource. Click the button below to view it.
-            </p>
-            <Button className="mt-4" variant="outline">
-              View Document
-            </Button>
-          </div>
-        );
-      case "quiz":
-        return (
-          <div className="rounded-lg overflow-hidden border border-border p-6">
-            <div className="flex items-center mb-4">
-              <Trophy className="h-8 w-8 text-amber-500 mr-3" />
-              <h3 className="text-xl font-medium">{activeMaterial.title}</h3>
-            </div>
-            <p className="text-muted-foreground">
-              Test your knowledge with this quiz. Complete it to progress in the course.
-            </p>
-            <Button className="mt-4" variant="default">
-              Start Quiz
-            </Button>
-          </div>
-        );
-      default:
-        return null;
+        </div>
+      );
+    } else if (material.type === 'quiz') {
+      return <div>Quiz interface would appear here</div>;
+    } else {
+      return <p>{material.content}</p>;
     }
   };
 
@@ -575,7 +547,7 @@ const CourseDetails = () => {
                               )}
                             </div>
                             
-                            {renderMaterialContent()}
+                            {renderMaterialContent(activeMaterial)}
                           </div>
                         </div>
                       ) : (

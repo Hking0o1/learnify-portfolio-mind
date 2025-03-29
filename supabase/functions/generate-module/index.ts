@@ -24,35 +24,51 @@ serve(async (req) => {
     console.log("Number of modules:", numModules)
     console.log("Difficulty level:", difficultyLevel)
 
-    // Create a prompt for the AI model
+    // Create a prompt for the AI model that emphasizes blog-style content
     const prompt = `
-      Create ${numModules} learning modules for a course titled "${courseTitle}". 
+      Create ${numModules} learning modules as detailed blog articles for a course titled "${courseTitle}". 
       Course description: ${courseDescription}
       Difficulty level: ${difficultyLevel}
       
-      For each module, provide:
-      1. A descriptive title
-      2. A brief description (2-3 sentences)
-      3. 3-4 key learning materials with titles and types (video, document, or quiz)
+      For each module:
+      1. Create a captivating blog title that would engage learners
+      2. Write a brief introduction (2-3 sentences) that outlines what the blog will cover
+      3. For each blog module, provide 3-4 learning materials that should be in the form of:
+         - A main article (markdown-formatted text content, minimum 300 words)
+         - A practical exercise or case study
+         - A summary/key takeaways section
       4. The module position number
       
       Format the response as JSON following this structure:
       {
         "modules": [
           {
-            "title": "Module title",
-            "description": "Module description",
+            "title": "Blog title",
+            "description": "Brief introduction to this module",
             "position": 0,
             "materials": [
               {
-                "title": "Material title",
-                "type": "video|document|quiz", 
-                "content": "Brief content description"
+                "title": "Main Article Title",
+                "type": "document",
+                "content": "Detailed article content in markdown format"
+              },
+              {
+                "title": "Practical Exercise",
+                "type": "exercise",
+                "content": "Step-by-step exercise instructions"
+              },
+              {
+                "title": "Key Takeaways",
+                "type": "summary", 
+                "content": "Summary of important points"
               }
             ]
           }
         ]
       }
+      
+      Ensure all content is educational, informative, and directly related to the course topic.
+      Content should be complete enough that a reader could learn the concepts without additional resources.
     `
 
     // Using Hugging Face Inference API for text generation
@@ -70,7 +86,7 @@ serve(async (req) => {
       )
     }
 
-    // Using Mistral model that's good for structured generation
+    // Using Mistral model for structured blog generation
     const response = await fetch(
       "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
       {
@@ -82,7 +98,7 @@ serve(async (req) => {
         body: JSON.stringify({
           inputs: prompt,
           parameters: {
-            max_new_tokens: 2048,
+            max_new_tokens: 4096, // Increased token limit for more detailed content
             temperature: 0.7,
             top_p: 0.9,
             return_full_text: false
@@ -114,32 +130,32 @@ serve(async (req) => {
       }
       
       moduleData = JSON.parse(jsonStr)
-      console.log("Processed modules:", moduleData)
+      console.log("Processed blog modules:", moduleData)
     } catch (error) {
       console.error("Error parsing AI response:", error)
       console.log("Response data:", data)
       
-      // Fallback to simple modules if parsing fails
+      // Fallback to simple blog modules if parsing fails
       moduleData = {
         modules: Array.from({ length: numModules }, (_, i) => ({
-          title: `Module ${i + 1}: Introduction to ${courseTitle} Part ${i + 1}`,
-          description: `This module introduces key concepts related to ${courseTitle}.`,
+          title: `Module ${i + 1}: Deep Dive into ${courseTitle} - Part ${i + 1}`,
+          description: `This comprehensive guide explores key concepts related to ${courseTitle} with practical examples and exercises.`,
           position: i,
           materials: [
             {
-              title: `Introduction to ${courseTitle} - Part ${i + 1}`,
-              type: "video",
-              content: "Video introduction to the core concepts."
-            },
-            {
-              title: `${courseTitle} Documentation`,
+              title: `Understanding ${courseTitle} - A Complete Guide`,
               type: "document",
-              content: "Detailed explanation of the concepts covered in this module."
+              content: `# Introduction to ${courseTitle}\n\nThis article provides a detailed exploration of the core concepts in ${courseTitle}. We'll cover the fundamental principles, practical applications, and best practices.\n\n## Key Concepts\n\n* First important concept\n* Second important concept\n* Third important concept\n\n## Practical Applications\n\nIn this section, we'll explore how these concepts apply in real-world scenarios. Examples include...\n\n## Advanced Techniques\n\nFor those looking to deepen their understanding, here are some advanced techniques to consider...\n\n## Conclusion\n\nBy mastering these concepts, you'll be well-equipped to tackle complex challenges in this field.`
             },
             {
-              title: `${courseTitle} Knowledge Check`,
-              type: "quiz",
-              content: "A quiz to test your understanding of the material."
+              title: `Practical Exercise: Applying ${courseTitle} Concepts`,
+              type: "exercise",
+              content: `# Hands-On Exercise\n\nIn this exercise, you will apply what you've learned about ${courseTitle}.\n\n## Step 1\n\nBegin by analyzing the problem...\n\n## Step 2\n\nApply the concepts from the lesson to...\n\n## Step 3\n\nReflect on your approach and consider alternative solutions...\n\n## Challenge\n\nFor extra practice, try extending your solution to handle...`
+            },
+            {
+              title: `${courseTitle} - Key Takeaways`,
+              type: "summary",
+              content: `# Summary\n\n## Main Points\n\n* First key takeaway\n* Second key takeaway\n* Third key takeaway\n\n## Common Mistakes to Avoid\n\n* Watch out for...\n* Be careful when...\n\n## Next Steps\n\nTo continue your learning journey, explore...\n\n## Additional Resources\n\n* Book recommendations\n* Online courses\n* Community forums`
             }
           ]
         }))

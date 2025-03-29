@@ -22,6 +22,8 @@ export interface ModuleGenerationParams {
 // Generate modules using AI via Edge Function
 export const generateModulesWithAI = async (params: ModuleGenerationParams): Promise<{ modules: GeneratedModule[] }> => {
   try {
+    console.log("Sending parameters to AI:", params);
+    
     const { data, error } = await supabase.functions.invoke('generate-module', {
       body: params,
     });
@@ -31,6 +33,7 @@ export const generateModulesWithAI = async (params: ModuleGenerationParams): Pro
       throw new Error(error.message || 'Failed to generate modules');
     }
 
+    console.log("Received AI-generated modules:", data);
     return data;
   } catch (error) {
     console.error('Error in generateModulesWithAI:', error);
@@ -41,10 +44,13 @@ export const generateModulesWithAI = async (params: ModuleGenerationParams): Pro
 // Save AI-generated modules to the database
 export const saveGeneratedModules = async (courseId: string, generatedModules: GeneratedModule[]) => {
   try {
+    console.log("Starting to save generated modules for courseId:", courseId);
     const savedModules = [];
 
     // Save each module and its materials
     for (const moduleData of generatedModules) {
+      console.log(`Saving module: ${moduleData.title}`);
+      
       // Create the module
       const { data: module, error: moduleError } = await supabase
         .from('modules')
@@ -57,8 +63,13 @@ export const saveGeneratedModules = async (courseId: string, generatedModules: G
         .select()
         .single();
 
-      if (moduleError) throw moduleError;
+      if (moduleError) {
+        console.error("Error saving module:", moduleError);
+        throw moduleError;
+      }
 
+      console.log(`Module saved with ID: ${module.id}`);
+      
       // Create materials for this module
       if (moduleData.materials && moduleData.materials.length > 0) {
         const materialsToInsert = moduleData.materials.map((material, index) => ({
@@ -69,23 +80,32 @@ export const saveGeneratedModules = async (courseId: string, generatedModules: G
           module_id: module.id
         }));
 
+        console.log(`Saving ${materialsToInsert.length} materials for module ${module.id}`);
+        
         const { data: materials, error: materialsError } = await supabase
           .from('materials')
           .insert(materialsToInsert)
           .select();
 
-        if (materialsError) throw materialsError;
+        if (materialsError) {
+          console.error("Error saving materials:", materialsError);
+          throw materialsError;
+        }
 
+        console.log(`Saved ${materials.length} materials successfully`);
+        
         // Combine module with its materials
         savedModules.push({
           ...module,
           materials
         });
       } else {
+        console.log("No materials to save for this module");
         savedModules.push(module);
       }
     }
 
+    console.log(`Successfully saved ${savedModules.length} modules`);
     return savedModules;
   } catch (error) {
     console.error('Error saving generated modules:', error);
