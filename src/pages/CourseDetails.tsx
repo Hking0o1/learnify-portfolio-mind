@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { ArrowLeft, BookOpen, Check, FileText, Folder, Play, PlusCircle, Trophy, FileVideo } from "lucide-react";
 import { useUserAuth } from "@/contexts/AuthContext";
-import marked from 'marked';
+import { marked } from 'marked';
 
 // Define specific string literals for material types
 type MaterialType = "video" | "document" | "quiz" | "summary" | "exercise";
