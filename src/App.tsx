@@ -27,6 +27,7 @@ import Settings from "./pages/Settings";
 import AddCourse from "./pages/AddCourse";
 import AddModule from "./pages/AddModule";
 import InstructorLogin from "./pages/InstructorLogin";
+import Assessment from "./pages/Assessment";
 
 // Create a loading component
 const LoadingScreen = () => (
@@ -70,6 +71,11 @@ const AnimatedRoutes = () => {
         <Route path="/portfolio" element={
           <ProtectedRoute>
             <Portfolio />
+          </ProtectedRoute>
+        } />
+        <Route path="/assessment/:assessmentId" element={
+          <ProtectedRoute>
+            <Assessment />
           </ProtectedRoute>
         } />
         <Route path="/analytics" element={

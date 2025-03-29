@@ -93,6 +93,8 @@ serve(async (req) => {
       )
     }
 
+    console.log("Sending prompt to AI:", prompt.substring(0, 100) + "...")
+
     // Using Mistral model for structured generation
     const response = await fetch(
       "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",

@@ -26,10 +26,11 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { PieChart, Pie, Cell, ResponsiveContainer, AreaChart as RechartArea, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart as RechartBar, Bar } from "recharts";
-import { usePortfolioAPI, type Recommendation } from "@/services/api";
+import { usePortfolioAPI } from "@/services/api";
 import { useUserAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { type Recommendation } from "@/services/portfolio";
 
 const Portfolio = () => {
   const { userId } = useUserAuth();
