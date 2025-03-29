@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Brain, Calendar, Clock, Share2, Zap } from "lucide-react";
+import { Brain, Calendar, Clock, Share2, Zap, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -37,9 +37,30 @@ import { useToast } from "@/hooks/use-toast";
 import { useUserAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { format, subDays } from "date-fns";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
+// Define a proper type for the insights
+interface InsightItem {
+  title: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+}
+
+interface GeneratedInsights {
+  [key: string]: InsightItem;
+}
 
 // Utility function to filter data by date range
-const filterDataByDays = (data, days) => {
+const filterDataByDays = (data: any[], days: number) => {
   if (!data || data.length === 0) return [];
   if (days <= 0) return data;
   
@@ -50,11 +71,11 @@ const filterDataByDays = (data, days) => {
 const Analytics = () => {
   const { toast } = useToast();
   const { userId } = useUserAuth();
-  const [timeRange, setTimeRange] = useState(30); // Default 30 days
-  const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
-  const [insightsDialogOpen, setInsightsDialogOpen] = useState(false);
-  const [generatedInsights, setGeneratedInsights] = useState(null);
+  const [timeRange, setTimeRange] = useState<number>(30); // Default 30 days
+  const [isGeneratingInsights, setIsGeneratingInsights] = useState<boolean>(false);
+  const [isSharing, setIsSharing] = useState<boolean>(false);
+  const [insightsDialogOpen, setInsightsDialogOpen] = useState<boolean>(false);
+  const [generatedInsights, setGeneratedInsights] = useState<GeneratedInsights | null>(null);
 
   // Learning time data
   const learningTimeData = [
@@ -67,8 +88,38 @@ const Analytics = () => {
     { name: "Sun", minutes: 40, date: format(new Date(), 'yyyy-MM-dd') },
   ];
 
+  // Additional data for longer ranges
+  const learningTimeDataExtended = [
+    ...learningTimeData,
+    { name: "Mon-2", minutes: 55, date: format(subDays(new Date(), 13), 'yyyy-MM-dd') },
+    { name: "Tue-2", minutes: 40, date: format(subDays(new Date(), 12), 'yyyy-MM-dd') },
+    { name: "Wed-2", minutes: 70, date: format(subDays(new Date(), 11), 'yyyy-MM-dd') },
+    { name: "Thu-2", minutes: 80, date: format(subDays(new Date(), 10), 'yyyy-MM-dd') },
+    { name: "Fri-2", minutes: 65, date: format(subDays(new Date(), 9), 'yyyy-MM-dd') },
+    { name: "Sat-2", minutes: 100, date: format(subDays(new Date(), 8), 'yyyy-MM-dd') },
+    { name: "Sun-2", minutes: 35, date: format(subDays(new Date(), 7), 'yyyy-MM-dd') },
+  ];
+
+  // Monthly data
+  const monthlyData = [
+    ...learningTimeDataExtended,
+    { name: "Mon-3", minutes: 65, date: format(subDays(new Date(), 20), 'yyyy-MM-dd') },
+    { name: "Tue-3", minutes: 50, date: format(subDays(new Date(), 19), 'yyyy-MM-dd') },
+    { name: "Wed-3", minutes: 80, date: format(subDays(new Date(), 18), 'yyyy-MM-dd') },
+    { name: "Thu-3", minutes: 95, date: format(subDays(new Date(), 17), 'yyyy-MM-dd') },
+    { name: "Fri-3", minutes: 70, date: format(subDays(new Date(), 16), 'yyyy-MM-dd') },
+    { name: "Sat-3", minutes: 110, date: format(subDays(new Date(), 15), 'yyyy-MM-dd') },
+    { name: "Sun-3", minutes: 45, date: format(subDays(new Date(), 14), 'yyyy-MM-dd') },
+  ];
+
   // Filter data based on selected time range
-  const filteredLearningTimeData = filterDataByDays(learningTimeData, timeRange);
+  const getFilteredData = (range: number) => {
+    if (range <= 7) return learningTimeData;
+    if (range <= 14) return learningTimeDataExtended;
+    return monthlyData;
+  };
+
+  const filteredLearningTimeData = getFilteredData(timeRange);
 
   // Progress by subject data
   const subjectProgressData = [
@@ -192,8 +243,17 @@ const Analytics = () => {
   const dayOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const dayValue = (day: string) => dayOrder.indexOf(day) + 1;
 
+  // Time range options
+  const timeRangeOptions = [
+    { value: "7", label: "Last 7 Days" },
+    { value: "30", label: "Last 30 Days" },
+    { value: "60", label: "Last 60 Days" },
+    { value: "90", label: "Last 90 Days" }
+  ];
+
   // Handler for changing time range
-  const handleTimeRangeChange = (days) => {
+  const handleTimeRangeChange = (value: string) => {
+    const days = parseInt(value);
     setTimeRange(days);
     toast({
       title: `Showing data for last ${days} days`,
@@ -235,7 +295,7 @@ const Analytics = () => {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Generate personalized insights based on the data
-      const insights = {
+      const insights: GeneratedInsights = {
         optimalLearningTime: {
           title: "Optimal Learning Times",
           description: "Your data shows you're most productive between 9-11 AM and 3-5 PM. Consider scheduling challenging courses during these times for optimal retention.",
@@ -293,22 +353,26 @@ const Analytics = () => {
             </p>
           </div>
           <div className="flex space-x-2">
-            <Button 
-              variant={timeRange === 30 ? "default" : "outline"} 
-              className={`flex items-center gap-2 ${timeRange === 30 ? "bg-blue-600" : ""}`}
-              onClick={() => handleTimeRangeChange(30)}
-            >
-              <Calendar className="h-4 w-4" />
-              Last 30 Days
-            </Button>
-            <Button 
-              variant={timeRange === 90 ? "default" : "outline"}
-              className={`flex items-center gap-2 ${timeRange === 90 ? "bg-blue-600" : ""}`}
-              onClick={() => handleTimeRangeChange(90)}
-            >
-              <Calendar className="h-4 w-4" />
-              Last 90 Days
-            </Button>
+            <div className="w-44">
+              <Select
+                value={timeRange.toString()}
+                onValueChange={handleTimeRangeChange}
+              >
+                <SelectTrigger className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  <SelectValue placeholder="Select time range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {timeRangeOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
             <Button 
               variant="outline" 
               className="flex items-center gap-2"
@@ -346,7 +410,7 @@ const Analytics = () => {
                     <CardDescription>Hours spent learning each day</CardDescription>
                   </div>
                   <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                    This Week
+                    Last {timeRange} Days
                   </Badge>
                 </div>
               </CardHeader>
@@ -703,56 +767,69 @@ const Analytics = () => {
         </Card>
       </div>
 
-      {/* AI Insights Dialog */}
+      {/* AI Insights Dialog with scrollable content and close button */}
       <Dialog open={insightsDialogOpen} onOpenChange={setInsightsDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>AI-Generated Learning Insights</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>AI-Generated Learning Insights</DialogTitle>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setInsightsDialogOpen(false)}
+                className="h-8 w-8 p-0 rounded-full"
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </Button>
+            </div>
             <DialogDescription>
               Personalized recommendations based on your learning patterns and progress
             </DialogDescription>
           </DialogHeader>
           
           {generatedInsights && (
-            <div className="space-y-6 mt-4">
-              {Object.entries(generatedInsights).map(([key, insight]) => (
-                <div 
-                  key={key}
-                  className={`p-4 rounded-lg ${
-                    insight.priority === 'high' 
-                      ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' 
-                      : 'bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-medium">
-                      {insight.title}
-                    </h3>
-                    {insight.priority === 'high' && (
-                      <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                        High Priority
-                      </Badge>
-                    )}
+            <ScrollArea className="h-[400px] pr-4">
+              <div className="space-y-6 mt-4">
+                {Object.entries(generatedInsights).map(([key, insight]) => (
+                  <div 
+                    key={key}
+                    className={`p-4 rounded-lg ${
+                      insight.priority === 'high' 
+                        ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' 
+                        : 'bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-medium">
+                        {insight.title}
+                      </h3>
+                      {insight.priority === 'high' && (
+                        <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                          High Priority
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="mt-2 text-gray-700 dark:text-gray-300">
+                      {insight.description}
+                    </p>
                   </div>
-                  <p className="mt-2 text-gray-700 dark:text-gray-300">
-                    {insight.description}
-                  </p>
-                </div>
-              ))}
+                ))}
 
-              <div className="flex justify-end gap-4 pt-4">
-                <Button 
-                  variant="outline"
-                  onClick={() => setInsightsDialogOpen(false)}
-                >
-                  Close
-                </Button>
-                <Button>
-                  <Share2 className="h-4 w-4 mr-1" />
-                  Share Insights
-                </Button>
+                <div className="flex justify-end gap-4 pt-4 pb-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => setInsightsDialogOpen(false)}
+                  >
+                    Close
+                  </Button>
+                  <Button>
+                    <Share2 className="h-4 w-4 mr-1" />
+                    Share Insights
+                  </Button>
+                </div>
               </div>
-            </div>
+            </ScrollArea>
           )}
         </DialogContent>
       </Dialog>
