@@ -21,12 +21,12 @@ serve(async (req) => {
     console.log(`Processing ${requestType} request for user:`, userId)
     
     // Get the API key from environment variables
-    const HF_API_KEY = Deno.env.get("HF_API_KEY")
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") || "sk-1234567890abcdef1234567890abcdef12345678"
     
-    if (!HF_API_KEY) {
+    if (!OPENAI_API_KEY) {
       return new Response(
         JSON.stringify({
-          error: "Missing API key for AI service. Please set HF_API_KEY in Supabase secrets."
+          error: "Missing API key for AI service. Please set OPENAI_API_KEY in Supabase secrets."
         }),
         { 
           status: 500,
@@ -35,11 +35,12 @@ serve(async (req) => {
       )
     }
 
-    let prompt = ""
+    let systemPrompt = "You are an AI career advisor that specializes in analyzing skills profiles and creating personalized career recommendations.";
+    let userPrompt = "";
     
     // Create different prompts based on the request type
     if (requestType === "recommendations") {
-      prompt = `
+      userPrompt = `
         Based on the following user skills profile, generate personalized learning recommendations:
         ${JSON.stringify(userSkills)}
         
@@ -52,14 +53,14 @@ serve(async (req) => {
               "id": 1,
               "title": "Recommendation title",
               "description": "Detailed description",
-              "match": 95, // percentage match with user profile
+              "match": 95,
               "type": "course|certification|workshop"
             }
           ]
         }
-      `
+      `;
     } else if (requestType === "assessment") {
-      prompt = `
+      userPrompt = `
         Create a personalized skills assessment plan for a user with the following skills profile:
         ${JSON.stringify(userSkills)}
         
@@ -82,7 +83,7 @@ serve(async (req) => {
             ]
           }
         }
-      `
+      `;
     } else {
       return new Response(
         JSON.stringify({ error: "Invalid request type. Supported types: recommendations, assessment" }),
@@ -90,61 +91,63 @@ serve(async (req) => {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
-      )
+      );
     }
 
-    console.log("Sending prompt to AI:", prompt.substring(0, 100) + "...")
+    console.log("Sending prompt to OpenAI");
 
-    // Using Mistral model for structured generation
-    const response = await fetch(
-      "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${HF_API_KEY}`
-        },
-        body: JSON.stringify({
-          inputs: prompt,
-          parameters: {
-            max_new_tokens: 1024,
-            temperature: 0.7,
-            top_p: 0.9,
-            return_full_text: false
-          }
-        })
-      }
-    )
+    // Using OpenAI API for generation
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 1024
+      })
+    });
 
-    const data = await response.json()
+    const data = await response.json();
     
     // Process the AI response - extract the JSON part
     try {
-      console.log("Raw AI response:", data)
+      console.log("Raw AI response:", data);
       
-      // Attempt to find and parse JSON in the response
-      const responseText = data[0]?.generated_text || ""
-      const jsonMatch = responseText.match(/```json([\s\S]*?)```/) || 
-                        responseText.match(/{[\s\S]*}/) || 
-                        [null, responseText]
-      
-      let jsonStr = jsonMatch[1] || jsonMatch[0] || ""
-      jsonStr = jsonStr.trim()
-      
-      // If the JSON is wrapped in backticks, remove them
-      if (jsonStr.startsWith("```") && jsonStr.endsWith("```")) {
-        jsonStr = jsonStr.substring(3, jsonStr.length - 3).trim()
+      if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+        throw new Error("Invalid response from OpenAI API");
       }
       
-      const aiResult = JSON.parse(jsonStr)
-      console.log("Processed result:", aiResult)
+      const content = data.choices[0].message.content;
+      let aiResult;
+      
+      try {
+        // Try to parse the response as JSON
+        aiResult = JSON.parse(content);
+      } catch (parseError) {
+        // Try to extract JSON from the text response
+        const jsonMatch = content.match(/{[\s\S]*}/);
+        if (jsonMatch) {
+          aiResult = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error("Could not extract valid JSON from response");
+        }
+      }
+      
+      console.log("Processed result:", aiResult);
       
       return new Response(
         JSON.stringify(aiResult),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      );
     } catch (error) {
-      console.error("Error parsing AI response:", error)
+      console.error("Error parsing AI response:", error);
       
       // Return a fallback response if parsing fails
       const fallbackResponse = requestType === "recommendations" 
@@ -203,10 +206,10 @@ serve(async (req) => {
       return new Response(
         JSON.stringify(fallbackResponse),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      );
     }
   } catch (error) {
-    console.error("Function error:", error.message)
+    console.error("Function error:", error.message);
     
     return new Response(
       JSON.stringify({ 
@@ -217,6 +220,6 @@ serve(async (req) => {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
-    )
+    );
   }
-})
+});

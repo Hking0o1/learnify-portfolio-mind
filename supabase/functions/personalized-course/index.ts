@@ -23,12 +23,12 @@ serve(async (req) => {
     console.log("User answers:", answers)
 
     // Get the API key from environment variables
-    const HF_API_KEY = Deno.env.get("HF_API_KEY")
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") || "sk-1234567890abcdef1234567890abcdef12345678"
     
-    if (!HF_API_KEY) {
+    if (!OPENAI_API_KEY) {
       return new Response(
         JSON.stringify({
-          error: "Missing API key for AI service. Please set HF_API_KEY in Supabase secrets."
+          error: "Missing API key for AI service. Please set OPENAI_API_KEY in Supabase secrets."
         }),
         { 
           status: 500,
@@ -58,9 +58,11 @@ serve(async (req) => {
     Tailored for your ${skillLevel} skill level with a focus on ${topicsInterest}, 
     this course accommodates your ${timeCommitment} weekly time commitment and follows a ${learningStyle} learning style.`;
 
-    // Create a prompt for the AI model that emphasizes blog-style content
-    const prompt = `
-      Create ${numModules} learning modules as detailed blog articles for a course titled "${courseTitle}". 
+    // Create a prompt for the OpenAI model
+    const systemPrompt = `You are an expert educational content creator specializing in creating detailed learning modules.
+    Create comprehensive, high-quality educational content that is well-structured and engaging.`;
+
+    const userPrompt = `Create ${numModules} learning modules as detailed blog articles for a course titled "${courseTitle}". 
       Course description: ${courseDescription}
       Difficulty level: ${skillLevel}
       Learning style preference: ${learningStyle}
@@ -73,8 +75,8 @@ serve(async (req) => {
          - A practical exercise or case study
          - A summary/key takeaways section
       4. The module position number
-      
-      Format the response as JSON following this structure:
+
+      Format your response as a JSON object with this exact structure:
       {
         "modules": [
           {
@@ -109,59 +111,63 @@ serve(async (req) => {
       }
       
       Ensure all content is educational, informative, and directly related to the course topic.
-      Content should be complete enough that a reader could learn the concepts without additional resources.
-    `
+      Content should be complete enough that a reader could learn the concepts without additional resources.`;
 
-    // Using Hugging Face Inference API for text generation
-    const response = await fetch(
-      "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${HF_API_KEY}`
-        },
-        body: JSON.stringify({
-          inputs: prompt,
-          parameters: {
-            max_new_tokens: 4096,
-            temperature: 0.7,
-            top_p: 0.9,
-            return_full_text: false
-          }
-        })
-      }
-    )
+    // Using OpenAI API for text generation
+    console.log("Sending request to OpenAI API")
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 4096
+      })
+    });
 
-    const data = await response.json()
+    const data = await response.json();
     
-    // Process the AI response - extract the JSON part
+    // Process the OpenAI response
     try {
-      console.log("Raw AI response:", data)
+      console.log("Received response from OpenAI")
       
-      // Attempt to find and parse JSON in the response
-      const responseText = data[0]?.generated_text || ""
-      const jsonMatch = responseText.match(/```json([\s\S]*?)```/) || 
-                        responseText.match(/{[\s\S]*}/) || 
-                        [null, responseText]
-      
-      let jsonStr = jsonMatch[1] || jsonMatch[0] || ""
-      jsonStr = jsonStr.trim()
-      
-      // If the JSON is wrapped in backticks, remove them
-      if (jsonStr.startsWith("```") && jsonStr.endsWith("```")) {
-        jsonStr = jsonStr.substring(3, jsonStr.length - 3).trim()
+      if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+        throw new Error("Invalid response from OpenAI API");
       }
       
-      const aiResult = JSON.parse(jsonStr)
-      console.log("Processed AI result:", aiResult)
+      const content = data.choices[0].message.content;
+      let aiResult;
+      
+      try {
+        // Try to parse the response as JSON
+        aiResult = JSON.parse(content);
+      } catch (parseError) {
+        console.error("Error parsing JSON from OpenAI response:", parseError);
+        
+        // Try to extract JSON from the text response
+        const jsonMatch = content.match(/{[\s\S]*}/);
+        if (jsonMatch) {
+          aiResult = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error("Could not extract valid JSON from response");
+        }
+      }
+      
+      console.log("Processed AI result:", aiResult);
       
       // Connect to Supabase using the REST API to save the course
-      const SUPABASE_URL = Deno.env.get("SUPABASE_URL")
-      const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")
+      const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+      const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
       
       if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-        throw new Error("Missing Supabase credentials")
+        throw new Error("Missing Supabase credentials");
       }
       
       // Create the course
@@ -184,15 +190,15 @@ serve(async (req) => {
           students: 0,
           rating: 0
         })
-      })
+      });
       
-      const courseData = await courseResponse.json()
+      const courseData = await courseResponse.json();
       if (!courseResponse.ok || !courseData || courseData.length === 0) {
-        throw new Error("Failed to create course")
+        throw new Error("Failed to create course");
       }
       
-      const courseId = courseData[0].id
-      console.log("Created course with ID:", courseId)
+      const courseId = courseData[0].id;
+      console.log("Created course with ID:", courseId);
       
       // Create the modules and materials
       for (const moduleData of aiResult.modules) {
@@ -211,21 +217,21 @@ serve(async (req) => {
             position: moduleData.position,
             course_id: courseId
           })
-        })
+        });
         
-        const moduleResult = await moduleResponse.json()
+        const moduleResult = await moduleResponse.json();
         if (!moduleResponse.ok || !moduleResult || moduleResult.length === 0) {
-          console.error("Failed to create module:", moduleData.title)
-          continue
+          console.error("Failed to create module:", moduleData.title);
+          continue;
         }
         
-        const moduleId = moduleResult[0].id
-        console.log("Created module with ID:", moduleId)
+        const moduleId = moduleResult[0].id;
+        console.log("Created module with ID:", moduleId);
         
         // Create materials for this module
         if (moduleData.materials && moduleData.materials.length > 0) {
           for (let i = 0; i < moduleData.materials.length; i++) {
-            const material = moduleData.materials[i]
+            const material = moduleData.materials[i];
             await fetch(`${SUPABASE_URL}/rest/v1/materials`, {
               method: 'POST',
               headers: {
@@ -240,7 +246,7 @@ serve(async (req) => {
                 position: i,
                 module_id: moduleId
               })
-            })
+            });
           }
         }
       }
@@ -258,7 +264,7 @@ serve(async (req) => {
           course_id: courseId,
           progress_percentage: 0
         })
-      })
+      });
       
       // Return the result
       return new Response(
@@ -268,9 +274,9 @@ serve(async (req) => {
           modules: aiResult.modules
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      );
     } catch (error) {
-      console.error("Error processing AI response or saving to database:", error)
+      console.error("Error processing AI response or saving to database:", error);
       
       return new Response(
         JSON.stringify({
@@ -281,10 +287,10 @@ serve(async (req) => {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
-      )
+      );
     }
   } catch (error) {
-    console.error("Function error:", error.message)
+    console.error("Function error:", error.message);
     
     return new Response(
       JSON.stringify({ 
@@ -295,6 +301,6 @@ serve(async (req) => {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
-    )
+    );
   }
-})
+});

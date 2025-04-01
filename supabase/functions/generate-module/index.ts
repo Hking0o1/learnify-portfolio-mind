@@ -24,8 +24,27 @@ serve(async (req) => {
     console.log("Number of modules:", numModules)
     console.log("Difficulty level:", difficultyLevel)
 
+    // Get the API key from environment variables
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") || "sk-1234567890abcdef1234567890abcdef12345678"
+    
+    if (!OPENAI_API_KEY) {
+      return new Response(
+        JSON.stringify({
+          error: "Missing API key for OpenAI. Please set OPENAI_API_KEY in Supabase secrets."
+        }),
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
+    }
+
+    // Create system prompt for OpenAI
+    const systemPrompt = `You are an expert educational content creator who specializes in creating detailed blog-style learning modules. 
+    Your task is to create high-quality, comprehensive educational content.`;
+
     // Create a prompt for the AI model that emphasizes blog-style content
-    const prompt = `
+    const userPrompt = `
       Create ${numModules} learning modules as detailed blog articles for a course titled "${courseTitle}". 
       Course description: ${courseDescription}
       Difficulty level: ${difficultyLevel}
@@ -69,71 +88,59 @@ serve(async (req) => {
       
       Ensure all content is educational, informative, and directly related to the course topic.
       Content should be complete enough that a reader could learn the concepts without additional resources.
-    `
+    `;
 
-    // Using Hugging Face Inference API for text generation
-    const HF_API_KEY = Deno.env.get("HF_API_KEY")
+    // Using OpenAI API for text generation
+    console.log("Sending request to OpenAI");
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 4096
+      })
+    });
+
+    const data = await response.json();
     
-    if (!HF_API_KEY) {
-      return new Response(
-        JSON.stringify({
-          error: "Missing API key for Hugging Face. Please set HF_API_KEY in Supabase secrets."
-        }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
-    }
-
-    // Using Mistral model for structured blog generation
-    const response = await fetch(
-      "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${HF_API_KEY}`
-        },
-        body: JSON.stringify({
-          inputs: prompt,
-          parameters: {
-            max_new_tokens: 4096, // Increased token limit for more detailed content
-            temperature: 0.7,
-            top_p: 0.9,
-            return_full_text: false
-          }
-        })
-      }
-    )
-
-    const data = await response.json()
-    
-    // Process the AI response - extract the JSON part
-    let moduleData
+    // Process the AI response
+    let moduleData;
     try {
-      // Extract JSON from text response
-      console.log("Raw AI response:", data)
+      console.log("Received response from OpenAI");
       
-      // Attempt to find and parse JSON in the response
-      const responseText = data[0]?.generated_text || ""
-      const jsonMatch = responseText.match(/```json([\s\S]*?)```/) || 
-                        responseText.match(/{[\s\S]*}/) || 
-                        [null, responseText]
-      
-      let jsonStr = jsonMatch[1] || jsonMatch[0] || ""
-      jsonStr = jsonStr.trim()
-      
-      // If the JSON is wrapped in backticks, remove them
-      if (jsonStr.startsWith("```") && jsonStr.endsWith("```")) {
-        jsonStr = jsonStr.substring(3, jsonStr.length - 3).trim()
+      if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+        throw new Error("Invalid response from OpenAI API");
       }
       
-      moduleData = JSON.parse(jsonStr)
-      console.log("Processed blog modules:", moduleData)
+      const content = data.choices[0].message.content;
+      
+      try {
+        // Try to parse the response as JSON directly
+        moduleData = JSON.parse(content);
+      } catch (parseError) {
+        console.error("Error parsing JSON from OpenAI response:", parseError);
+        
+        // Try to extract JSON from the text response
+        const jsonMatch = content.match(/{[\s\S]*}/);
+        if (jsonMatch) {
+          moduleData = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error("Could not extract valid JSON from response");
+        }
+      }
+      
+      console.log("Processed blog modules:", moduleData);
     } catch (error) {
-      console.error("Error parsing AI response:", error)
-      console.log("Response data:", data)
+      console.error("Error parsing AI response:", error);
+      console.log("Response data:", data);
       
       // Fallback to simple blog modules if parsing fails
       moduleData = {
@@ -159,17 +166,17 @@ serve(async (req) => {
             }
           ]
         }))
-      }
+      };
     }
 
     // Return the generated modules
     return new Response(
       JSON.stringify(moduleData),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    );
 
   } catch (error) {
-    console.error("Function error:", error.message)
+    console.error("Function error:", error.message);
     
     return new Response(
       JSON.stringify({ 
@@ -180,6 +187,6 @@ serve(async (req) => {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
-    )
+    );
   }
-})
+});

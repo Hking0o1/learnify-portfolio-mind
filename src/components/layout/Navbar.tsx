@@ -1,303 +1,334 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { UserButton, SignInButton, SignOutButton } from "@clerk/clerk-react";
 import {
-  Book,
-  Home,
-  Menu,
-  X,
-  LogIn,
-  Sparkles,
-  BookOpen,
-  LayoutDashboard,
-} from "lucide-react";
-import { SignOutButton, useClerk, useUser } from "@clerk/clerk-react";
-import { useUserAuth } from "@/contexts/AuthContext";
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { ModeToggle } from "@/components/ui/mode-toggle";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
+import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useUserAuth } from "@/contexts/AuthContext";
+import { Menu, X, ChevronDown, Laptop, Moon, Sun } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useTheme } from "@/hooks/use-theme";
+import useMobile from "@/hooks/use-mobile";
 
-export const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
+export function Navbar() {
+  const { isAuthenticated, fullName, userId, isInstructor, isAdmin } = useUserAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const { signOut } = useClerk();
-  const { isInstructor } = useUserAuth();
-  const { isSignedIn, user } = useUser();
-
-  const handleSignOut = () => {
-    signOut(() => navigate("/"));
-  };
+  const { theme, setTheme } = useTheme();
+  const isMobile = useMobile();
 
   const toggleMenu = () => {
-    setIsOpen(!isOpen);
+    setIsMenuOpen(!isMenuOpen);
   };
 
   const closeMenu = () => {
-    setIsOpen(false);
+    setIsMenuOpen(false);
   };
 
-  const getInitials = (name = "") => {
+  const handleSignOut = () => {
+    // Additional sign out logic if needed
+    navigate("/");
+  };
+
+  const getInitials = (name: string) => {
+    if (!name) return "U";
     return name
       .split(" ")
       .map((n) => n[0])
       .join("")
-      .toUpperCase();
+      .toUpperCase()
+      .substring(0, 2);
   };
 
-  return (
-    <nav className="bg-white dark:bg-gray-950 border-b dark:border-gray-800 sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <NavLink to="/" className="flex-shrink-0 flex items-center">
-              <Book className="h-8 w-8 text-primary" />
-              <span className="ml-2 text-xl font-bold">LearnSphere</span>
-            </NavLink>
-            <div className="hidden md:ml-6 md:flex md:space-x-8">
-              <NavLink
-                to="/dashboard"
-                className={({ isActive }) =>
-                  `inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 ${
-                    isActive
-                      ? "border-primary text-primary dark:border-primary dark:text-primary"
-                      : "border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
-                  }`
-                }
-              >
-                <LayoutDashboard className="mr-1 h-4 w-4" />
-                Dashboard
-              </NavLink>
-              <NavLink
-                to="/courses"
-                className={({ isActive }) =>
-                  `inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 ${
-                    isActive
-                      ? "border-primary text-primary dark:border-primary dark:text-primary"
-                      : "border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
-                  }`
-                }
-              >
-                <BookOpen className="mr-1 h-4 w-4" />
-                Courses
-              </NavLink>
-              {isSignedIn && (
-                <NavLink
-                  to="/course-recommendation"
-                  className={({ isActive }) =>
-                    `inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 ${
-                      isActive
-                        ? "border-primary text-primary dark:border-primary dark:text-primary"
-                        : "border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
-                    }`
-                  }
-                >
-                  <Sparkles className="mr-1 h-4 w-4" />
-                  Personalized Course
-                </NavLink>
-              )}
-              {isInstructor && (
-                <NavLink
-                  to="/instructor"
-                  className={({ isActive }) =>
-                    `inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 ${
-                      isActive
-                        ? "border-primary text-primary dark:border-primary dark:text-primary"
-                        : "border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
-                    }`
-                  }
-                >
-                  Instructor
-                </NavLink>
-              )}
-            </div>
-          </div>
-          <div className="hidden md:ml-6 md:flex md:items-center">
-            {isSignedIn ? (
-              <div className="flex items-center space-x-4">
-                <NavLink
-                  to="/profile"
-                  className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
-                >
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage
-                      src={user?.imageUrl}
-                      alt={user?.fullName || ""}
-                    />
-                    <AvatarFallback>
-                      {getInitials(user?.fullName || "")}
-                    </AvatarFallback>
-                  </Avatar>
-                </NavLink>
-                <SignOutButton signOutCallback={handleSignOut}>
-                  <Button variant="outline">Sign Out</Button>
-                </SignOutButton>
-              </div>
-            ) : (
-              <div className="flex space-x-4">
-                <Button
-                  variant="ghost"
-                  onClick={() => navigate("/sign-in")}
-                  className="flex items-center"
-                >
-                  <LogIn className="mr-1 h-4 w-4" />
-                  Sign In
-                </Button>
-                <Button onClick={() => navigate("/sign-up")}>Sign Up</Button>
-              </div>
+  const ListItem = React.forwardRef<
+    React.ElementRef<"a">,
+    React.ComponentPropsWithoutRef<"a">
+  >(({ className, title, children, ...props }, ref) => {
+    return (
+      <li>
+        <NavigationMenuLink asChild>
+          <a
+            ref={ref}
+            className={cn(
+              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+              className
             )}
-          </div>
-          <div className="-mr-2 flex items-center md:hidden">
-            <button
-              onClick={toggleMenu}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
-            >
-              <span className="sr-only">Open main menu</span>
-              {isOpen ? (
-                <X className="block h-6 w-6" aria-hidden="true" />
-              ) : (
-                <Menu className="block h-6 w-6" aria-hidden="true" />
+            {...props}
+          >
+            <div className="text-sm font-medium leading-none">{title}</div>
+            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+              {children}
+            </p>
+          </a>
+        </NavigationMenuLink>
+      </li>
+    );
+  });
+  ListItem.displayName = "ListItem";
+
+  return (
+    <header className="sticky top-0 z-40 w-full border-b bg-background">
+      <div className="container flex h-16 items-center justify-between">
+        {/* Logo */}
+        <NavLink to="/" className="flex items-center space-x-2">
+          <span className="font-bold text-xl">EduLMS</span>
+        </NavLink>
+
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex md:items-center md:space-x-4">
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger>Explore</NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-2">
+                    <ListItem
+                      href="/courses"
+                      title="All Courses"
+                    >
+                      Browse our catalog of professional courses.
+                    </ListItem>
+                    <ListItem
+                      href="/assessment"
+                      title="Skills Assessment"
+                    >
+                      Evaluate your current skills and get personalized recommendations.
+                    </ListItem>
+                    <ListItem
+                      href="/course-recommendation"
+                      title="Course Recommendation"
+                    >
+                      Get AI-powered course recommendations based on your goals.
+                    </ListItem>
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+              
+              {isInstructor && (
+                <NavigationMenuItem>
+                  <NavigationMenuLink asChild>
+                    <NavLink
+                      to="/instructor"
+                      className={({ isActive }) =>
+                        cn(
+                          "group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50",
+                          isActive && "bg-accent text-accent-foreground"
+                        )
+                      }
+                    >
+                      Instructor
+                    </NavLink>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
               )}
-            </button>
-          </div>
+
+              {isAdmin && (
+                <NavigationMenuItem>
+                  <NavigationMenuLink asChild>
+                    <NavLink
+                      to="/admin"
+                      className={({ isActive }) =>
+                        cn(
+                          "group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50",
+                          isActive && "bg-accent text-accent-foreground"
+                        )
+                      }
+                    >
+                      Admin
+                    </NavLink>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              )}
+            </NavigationMenuList>
+          </NavigationMenu>
+
+          {isAuthenticated ? (
+            <div className="flex items-center space-x-4">
+              <ModeToggle />
+              <NavLink to="/profile" className="flex items-center space-x-1">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src="" alt={fullName || "User"} />
+                  <AvatarFallback>{getInitials(fullName || "")}</AvatarFallback>
+                </Avatar>
+              </NavLink>
+              <SignOutButton>
+                <Button variant="outline" onClick={handleSignOut}>Sign Out</Button>
+              </SignOutButton>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-4">
+              <ModeToggle />
+              <SignInButton mode="modal">
+                <Button variant="outline">Sign In</Button>
+              </SignInButton>
+              <SignInButton mode="modal">
+                <Button>Sign Up</Button>
+              </SignInButton>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Navigation */}
+        <div className="md:hidden flex items-center">
+          <ModeToggle />
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="ml-2">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle Menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[80%] sm:w-[385px]">
+              <div className="flex flex-col h-full">
+                <div className="px-4 py-6">
+                  <NavLink
+                    to="/"
+                    className="flex items-center space-x-2 mb-6"
+                    onClick={closeMenu}
+                  >
+                    <span className="font-bold text-xl">EduLMS</span>
+                  </NavLink>
+                  <nav className="flex flex-col space-y-4">
+                    <NavLink
+                      to="/courses"
+                      onClick={closeMenu}
+                      className={({ isActive }) =>
+                        cn(
+                          "px-3 py-2 rounded-md text-base font-medium hover:bg-gray-50 dark:hover:bg-gray-800",
+                          isActive 
+                            ? "text-primary font-semibold" 
+                            : "text-gray-700 dark:text-gray-300"
+                        )
+                      }
+                    >
+                      Courses
+                    </NavLink>
+                    <NavLink
+                      to="/assessment"
+                      onClick={closeMenu}
+                      className={({ isActive }) =>
+                        cn(
+                          "px-3 py-2 rounded-md text-base font-medium hover:bg-gray-50 dark:hover:bg-gray-800",
+                          isActive 
+                            ? "text-primary font-semibold" 
+                            : "text-gray-700 dark:text-gray-300"
+                        )
+                      }
+                    >
+                      Assessment
+                    </NavLink>
+                    <NavLink
+                      to="/course-recommendation"
+                      onClick={closeMenu}
+                      className={({ isActive }) =>
+                        cn(
+                          "px-3 py-2 rounded-md text-base font-medium hover:bg-gray-50 dark:hover:bg-gray-800",
+                          isActive 
+                            ? "text-primary font-semibold" 
+                            : "text-gray-700 dark:text-gray-300"
+                        )
+                      }
+                    >
+                      Course Recommendation
+                    </NavLink>
+                    
+                    {isInstructor && (
+                      <NavLink
+                        to="/instructor"
+                        onClick={closeMenu}
+                        className={({ isActive }) =>
+                          cn(
+                            "px-3 py-2 rounded-md text-base font-medium hover:bg-gray-50 dark:hover:bg-gray-800",
+                            isActive 
+                              ? "text-primary font-semibold" 
+                              : "text-gray-700 dark:text-gray-300"
+                          )
+                        }
+                      >
+                        Instructor Dashboard
+                      </NavLink>
+                    )}
+                    
+                    {isAdmin && (
+                      <NavLink
+                        to="/admin"
+                        onClick={closeMenu}
+                        className={({ isActive }) =>
+                          cn(
+                            "px-3 py-2 rounded-md text-base font-medium hover:bg-gray-50 dark:hover:bg-gray-800",
+                            isActive 
+                              ? "text-primary font-semibold" 
+                              : "text-gray-700 dark:text-gray-300"
+                          )
+                        }
+                      >
+                        Admin Dashboard
+                      </NavLink>
+                    )}
+                  </nav>
+                </div>
+                <div className="mt-auto px-4 py-6 border-t">
+                  {isAuthenticated ? (
+                    <div className="space-y-4">
+                      <NavLink
+                        to="/profile"
+                        onClick={closeMenu}
+                        className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      >
+                        <Avatar className="h-8 w-8 mr-2">
+                          <AvatarImage src="" alt={fullName || "User"} />
+                          <AvatarFallback>{getInitials(fullName || "")}</AvatarFallback>
+                        </Avatar>
+                        Your Profile
+                      </NavLink>
+                      <SignOutButton>
+                        <button 
+                          onClick={handleSignOut}
+                          className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                          Sign out
+                        </button>
+                      </SignOutButton>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <SignInButton mode="modal">
+                        <Button variant="outline" className="w-full">
+                          Sign In
+                        </Button>
+                      </SignInButton>
+                      <SignInButton mode="modal">
+                        <Button className="w-full">
+                          Sign Up
+                        </Button>
+                      </SignInButton>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
-
-      {isOpen && (
-        <div className="md:hidden">
-          <div className="pt-2 pb-3 space-y-1">
-            <NavLink
-              to="/dashboard"
-              onClick={closeMenu}
-              className={({ isActive }) =>
-                `block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                  isActive
-                    ? "border-primary text-primary dark:border-primary dark:text-primary bg-indigo-50 dark:bg-gray-800"
-                    : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:text-gray-700 dark:hover:text-gray-300"
-                }`
-              }
-            >
-              <div className="flex items-center">
-                <Home className="mr-2 h-4 w-4" />
-                Dashboard
-              </div>
-            </NavLink>
-            <NavLink
-              to="/courses"
-              onClick={closeMenu}
-              className={({ isActive }) =>
-                `block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                  isActive
-                    ? "border-primary text-primary dark:border-primary dark:text-primary bg-indigo-50 dark:bg-gray-800"
-                    : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:text-gray-700 dark:hover:text-gray-300"
-                }`
-              }
-            >
-              <div className="flex items-center">
-                <BookOpen className="mr-2 h-4 w-4" />
-                Courses
-              </div>
-            </NavLink>
-            {isSignedIn && (
-              <NavLink
-                to="/course-recommendation"
-                onClick={closeMenu}
-                className={({ isActive }) =>
-                  `block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                    isActive
-                      ? "border-primary text-primary dark:border-primary dark:text-primary bg-indigo-50 dark:bg-gray-800"
-                      : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:text-gray-700 dark:hover:text-gray-300"
-                  }`
-                }
-              >
-                <div className="flex items-center">
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Personalized Course
-                </div>
-              </NavLink>
-            )}
-            {isInstructor && (
-              <NavLink
-                to="/instructor"
-                onClick={closeMenu}
-                className={({ isActive }) =>
-                  `block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                    isActive
-                      ? "border-primary text-primary dark:border-primary dark:text-primary bg-indigo-50 dark:bg-gray-800"
-                      : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:text-gray-700 dark:hover:text-gray-300"
-                  }`
-                }
-              >
-                <div className="flex items-center">
-                  <Book className="mr-2 h-4 w-4" />
-                  Instructor
-                </div>
-              </NavLink>
-            )}
-          </div>
-          <div className="pt-4 pb-3 border-t border-gray-200 dark:border-gray-700">
-            {isSignedIn ? (
-              <div className="space-y-2">
-                <div className="flex items-center px-4">
-                  <div className="flex-shrink-0">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage
-                        src={user?.imageUrl}
-                        alt={user?.fullName || ""}
-                      />
-                      <AvatarFallback>
-                        {getInitials(user?.fullName || "")}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                  <div className="ml-3">
-                    <div className="text-base font-medium text-gray-800 dark:text-gray-200">
-                      {user?.fullName}
-                    </div>
-                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      {user?.emailAddresses[0]?.emailAddress}
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-3 space-y-1 px-2">
-                  <NavLink
-                    to="/profile"
-                    onClick={closeMenu}
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
-                  >
-                    Your Profile
-                  </NavLink>
-                  <SignOutButton signOutCallback={handleSignOut}>
-                    <button 
-                      className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
-                    >
-                      Sign out
-                    </button>
-                  </SignOutButton>
-                </div>
-              </div>
-            ) : (
-              <div className="px-4 space-y-2">
-                <button
-                  onClick={() => {
-                    navigate("/sign-in");
-                    closeMenu();
-                  }}
-                  className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
-                >
-                  Sign In
-                </button>
-                <button
-                  onClick={() => {
-                    navigate("/sign-up");
-                    closeMenu();
-                  }}
-                  className="block w-full px-3 py-2 rounded-md text-base font-medium bg-primary text-white hover:bg-primary/90"
-                >
-                  Sign Up
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </nav>
+    </header>
   );
-};
+}
