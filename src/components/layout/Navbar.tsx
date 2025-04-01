@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -127,8 +126,8 @@ export const Navbar = () => {
                     </AvatarFallback>
                   </Avatar>
                 </NavLink>
-                <SignOutButton>
-                  <Button variant="outline" onClick={handleSignOut}>Sign Out</Button>
+                <SignOutButton signOutCallback={handleSignOut}>
+                  <Button variant="outline">Sign Out</Button>
                 </SignOutButton>
               </div>
             ) : (
@@ -265,9 +264,8 @@ export const Navbar = () => {
                   >
                     Your Profile
                   </NavLink>
-                  <SignOutButton>
+                  <SignOutButton signOutCallback={handleSignOut}>
                     <button 
-                      onClick={handleSignOut}
                       className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
                     >
                       Sign out

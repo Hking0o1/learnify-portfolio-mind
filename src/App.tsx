@@ -39,7 +39,7 @@ function App() {
   const clerkTheme = resolvedTheme === "dark" ? dark : undefined;
 
   // Get the Clerk publishable key from the environment variables
-  const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || 'pk_test_c291bmQtZGVlci0yMS5jbGVyay5hY2NvdW50cy5kZXYk';
 
   if (!PUBLISHABLE_KEY) {
     return (
