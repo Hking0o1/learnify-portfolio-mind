@@ -1,34 +1,34 @@
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "./components/theme-provider";
-import { Toaster } from "./components/ui/toaster";
-import { AuthProvider } from "./contexts/AuthContext";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { dark } from "@clerk/themes";
-import { useTheme } from "./hooks/use-theme";
+import { useTheme } from "@/hooks/use-theme";
 
-// Pages - Fix imports to use default exports
-import Index from "./pages/Index";
-import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
-import Dashboard from "./pages/Dashboard";
-import NotFound from "./pages/NotFound";
-import Courses from "./pages/Courses";
-import CourseDetails from "./pages/CourseDetails";
-import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
-import Portfolio from "./pages/Portfolio";
-import Admin from "./pages/Admin";
-import Analytics from "./pages/Analytics";
-import Assessment from "./pages/Assessment";
-import Instructor from "./pages/Instructor";
-import AddCourse from "./pages/AddCourse";
-import AddModule from "./pages/AddModule";
-import CourseRecommendation from "./pages/CourseRecommendation";
-import InstructorLogin from "./pages/InstructorLogin";
+// Pages
+import Index from "@/pages/Index";
+import SignIn from "@/pages/SignIn";
+import SignUp from "@/pages/SignUp";
+import Dashboard from "@/pages/Dashboard";
+import NotFound from "@/pages/NotFound";
+import Courses from "@/pages/Courses";
+import CourseDetails from "@/pages/CourseDetails";
+import Profile from "@/pages/Profile";
+import Settings from "@/pages/Settings";
+import Portfolio from "@/pages/Portfolio";
+import Admin from "@/pages/Admin";
+import Analytics from "@/pages/Analytics";
+import Assessment from "@/pages/Assessment";
+import Instructor from "@/pages/Instructor";
+import AddCourse from "@/pages/AddCourse";
+import AddModule from "@/pages/AddModule";
+import CourseRecommendation from "@/pages/CourseRecommendation";
+import InstructorLogin from "@/pages/InstructorLogin";
 
 // Components
-import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Create a client for React Query
