@@ -58,13 +58,19 @@ const AddCourse = () => {
     setIsSubmitting(true);
     
     try {
+      if (!userId) {
+        throw new Error("User ID not found. Please log in again.");
+      }
+      
       // Convert price to number for the API
       const courseData = {
         ...values,
         price: parseFloat(values.price),
-        instructor_id: userId, // Use userId instead of user.id
+        instructor_id: userId,
         status: "Draft", // Set initial status as Draft
       };
+      
+      console.log("Creating course with data:", courseData);
       
       // Call the API service
       const result = await withToast(
@@ -81,6 +87,11 @@ const AddCourse = () => {
       }
     } catch (error) {
       console.error("Error creating course:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create course. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
