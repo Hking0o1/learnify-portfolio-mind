@@ -7,25 +7,25 @@ import { ClerkProvider } from "@clerk/clerk-react";
 import { dark } from "@clerk/themes";
 import { useTheme } from "./hooks/use-theme";
 
-// Pages
-import { Index } from "./pages/Index";
-import { SignIn } from "./pages/SignIn";
-import { SignUp } from "./pages/SignUp";
-import { Dashboard } from "./pages/Dashboard";
-import { NotFound } from "./pages/NotFound";
-import { Courses } from "./pages/Courses";
-import { CourseDetails } from "./pages/CourseDetails";
-import { Profile } from "./pages/Profile";
-import { Settings } from "./pages/Settings";
-import { Portfolio } from "./pages/Portfolio";
-import { Admin } from "./pages/Admin";
-import { Analytics } from "./pages/Analytics";
-import { Assessment } from "./pages/Assessment";
+// Pages - Fix imports to use default exports
+import Index from "./pages/Index";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+import Dashboard from "./pages/Dashboard";
+import NotFound from "./pages/NotFound";
+import Courses from "./pages/Courses";
+import CourseDetails from "./pages/CourseDetails";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import Portfolio from "./pages/Portfolio";
+import Admin from "./pages/Admin";
+import Analytics from "./pages/Analytics";
+import Assessment from "./pages/Assessment";
 import Instructor from "./pages/Instructor";
 import AddCourse from "./pages/AddCourse";
 import AddModule from "./pages/AddModule";
 import CourseRecommendation from "./pages/CourseRecommendation";
-import { InstructorLogin } from "./pages/InstructorLogin";
+import InstructorLogin from "./pages/InstructorLogin";
 
 // Components
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -71,59 +71,111 @@ function App() {
                 {/* Protected Routes */}
                 <Route
                   path="/dashboard"
-                  element={<ProtectedRoute component={Dashboard} />}
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
                 />
                 <Route
                   path="/courses"
-                  element={<ProtectedRoute component={Courses} />}
+                  element={
+                    <ProtectedRoute>
+                      <Courses />
+                    </ProtectedRoute>
+                  }
                 />
                 <Route
                   path="/courses/:id"
-                  element={<ProtectedRoute component={CourseDetails} />}
+                  element={
+                    <ProtectedRoute>
+                      <CourseDetails />
+                    </ProtectedRoute>
+                  }
                 />
                 <Route
                   path="/profile"
-                  element={<ProtectedRoute component={Profile} />}
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  }
                 />
                 <Route
                   path="/settings"
-                  element={<ProtectedRoute component={Settings} />}
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  }
                 />
                 <Route
                   path="/portfolio"
-                  element={<ProtectedRoute component={Portfolio} />}
+                  element={
+                    <ProtectedRoute>
+                      <Portfolio />
+                    </ProtectedRoute>
+                  }
                 />
                 <Route
                   path="/assessment"
-                  element={<ProtectedRoute component={Assessment} />}
+                  element={
+                    <ProtectedRoute>
+                      <Assessment />
+                    </ProtectedRoute>
+                  }
                 />
                 <Route
                   path="/course-recommendation"
-                  element={<ProtectedRoute component={CourseRecommendation} />}
+                  element={
+                    <ProtectedRoute>
+                      <CourseRecommendation />
+                    </ProtectedRoute>
+                  }
                 />
 
                 {/* Instructor Routes */}
                 <Route
                   path="/instructor"
-                  element={<ProtectedRoute component={Instructor} requireInstructor />}
+                  element={
+                    <ProtectedRoute allowedRoles={["instructor", "admin"]}>
+                      <Instructor />
+                    </ProtectedRoute>
+                  }
                 />
                 <Route
                   path="/add-course"
-                  element={<ProtectedRoute component={AddCourse} requireInstructor />}
+                  element={
+                    <ProtectedRoute allowedRoles={["instructor", "admin"]}>
+                      <AddCourse />
+                    </ProtectedRoute>
+                  }
                 />
                 <Route
                   path="/add-module/:courseId"
-                  element={<ProtectedRoute component={AddModule} requireInstructor />}
+                  element={
+                    <ProtectedRoute allowedRoles={["instructor", "admin"]}>
+                      <AddModule />
+                    </ProtectedRoute>
+                  }
                 />
 
                 {/* Admin Routes */}
                 <Route
                   path="/admin"
-                  element={<ProtectedRoute component={Admin} requireAdmin />}
+                  element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                      <Admin />
+                    </ProtectedRoute>
+                  }
                 />
                 <Route
                   path="/analytics"
-                  element={<ProtectedRoute component={Analytics} requireAdmin />}
+                  element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                      <Analytics />
+                    </ProtectedRoute>
+                  }
                 />
 
                 <Route path="*" element={<NotFound />} />

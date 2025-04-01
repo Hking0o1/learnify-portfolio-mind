@@ -12,10 +12,9 @@ import {
   BookOpen,
   LayoutDashboard,
 } from "lucide-react";
-import { SignOutButton, useClerk } from "@clerk/clerk-react";
+import { SignOutButton, useClerk, useUser } from "@clerk/clerk-react";
 import { useUserAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useUser } from "@clerk/clerk-react";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -128,8 +127,8 @@ export const Navbar = () => {
                     </AvatarFallback>
                   </Avatar>
                 </NavLink>
-                <SignOutButton signOutCallback={handleSignOut}>
-                  <Button variant="outline">Sign Out</Button>
+                <SignOutButton>
+                  <Button variant="outline" onClick={handleSignOut}>Sign Out</Button>
                 </SignOutButton>
               </div>
             ) : (
@@ -266,8 +265,11 @@ export const Navbar = () => {
                   >
                     Your Profile
                   </NavLink>
-                  <SignOutButton signOutCallback={handleSignOut}>
-                    <button className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <SignOutButton>
+                    <button 
+                      onClick={handleSignOut}
+                      className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >
                       Sign out
                     </button>
                   </SignOutButton>
