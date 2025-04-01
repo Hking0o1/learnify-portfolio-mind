@@ -80,24 +80,14 @@ serve(async (req) => {
       {
         "modules": [
           {
-            "title": "Blog title",
-            "description": "Brief introduction to this module",
+            "title": "Module Title",
+            "description": "Brief introduction",
             "position": 0,
             "materials": [
               {
-                "title": "Main Article Title",
+                "title": "Material Title",
                 "type": "document",
-                "content": "Detailed article content in markdown format"
-              },
-              {
-                "title": "Practical Exercise",
-                "type": "exercise",
-                "content": "Step-by-step exercise instructions"
-              },
-              {
-                "title": "Key Takeaways",
-                "type": "summary", 
-                "content": "Summary of important points"
+                "content": "Content in markdown format"
               }
             ]
           }
@@ -110,8 +100,7 @@ serve(async (req) => {
         }
       }
       
-      Ensure all content is educational, informative, and directly related to the course topic.
-      Content should be complete enough that a reader could learn the concepts without additional resources.`;
+      Ensure all content is educational, informative, and directly related to the course topic.`;
 
     // Using OpenAI API for text generation
     console.log("Sending request to OpenAI API")
@@ -132,6 +121,11 @@ serve(async (req) => {
       })
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
+    }
+
     const data = await response.json();
     
     // Process the OpenAI response
@@ -143,6 +137,8 @@ serve(async (req) => {
       }
       
       const content = data.choices[0].message.content;
+      console.log("OpenAI raw response:", content);
+      
       let aiResult;
       
       try {
@@ -154,13 +150,17 @@ serve(async (req) => {
         // Try to extract JSON from the text response
         const jsonMatch = content.match(/{[\s\S]*}/);
         if (jsonMatch) {
-          aiResult = JSON.parse(jsonMatch[0]);
+          try {
+            aiResult = JSON.parse(jsonMatch[0]);
+          } catch (nestedError) {
+            throw new Error("Could not extract valid JSON from response");
+          }
         } else {
           throw new Error("Could not extract valid JSON from response");
         }
       }
       
-      console.log("Processed AI result:", aiResult);
+      console.log("Processed AI result:", JSON.stringify(aiResult).substring(0, 200) + "...");
       
       // Connect to Supabase using the REST API to save the course
       const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -192,9 +192,14 @@ serve(async (req) => {
         })
       });
       
+      if (!courseResponse.ok) {
+        const errorText = await courseResponse.text();
+        throw new Error(`Failed to create course: ${courseResponse.status} ${errorText}`);
+      }
+      
       const courseData = await courseResponse.json();
-      if (!courseResponse.ok || !courseData || courseData.length === 0) {
-        throw new Error("Failed to create course");
+      if (!courseData || courseData.length === 0) {
+        throw new Error("Failed to create course: Empty response");
       }
       
       const courseId = courseData[0].id;
@@ -219,8 +224,14 @@ serve(async (req) => {
           })
         });
         
+        if (!moduleResponse.ok) {
+          const errorText = await moduleResponse.text();
+          console.error(`Failed to create module: ${moduleResponse.status} ${errorText}`);
+          continue;
+        }
+        
         const moduleResult = await moduleResponse.json();
-        if (!moduleResponse.ok || !moduleResult || moduleResult.length === 0) {
+        if (!moduleResult || moduleResult.length === 0) {
           console.error("Failed to create module:", moduleData.title);
           continue;
         }
@@ -232,7 +243,7 @@ serve(async (req) => {
         if (moduleData.materials && moduleData.materials.length > 0) {
           for (let i = 0; i < moduleData.materials.length; i++) {
             const material = moduleData.materials[i];
-            await fetch(`${SUPABASE_URL}/rest/v1/materials`, {
+            const materialResponse = await fetch(`${SUPABASE_URL}/rest/v1/materials`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -247,12 +258,17 @@ serve(async (req) => {
                 module_id: moduleId
               })
             });
+            
+            if (!materialResponse.ok) {
+              const errorText = await materialResponse.text();
+              console.error(`Failed to create material: ${materialResponse.status} ${errorText}`);
+            }
           }
         }
       }
       
       // Automatically enroll the user in this course
-      await fetch(`${SUPABASE_URL}/rest/v1/user_progress`, {
+      const enrollResponse = await fetch(`${SUPABASE_URL}/rest/v1/user_progress`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -265,6 +281,11 @@ serve(async (req) => {
           progress_percentage: 0
         })
       });
+      
+      if (!enrollResponse.ok) {
+        const errorText = await enrollResponse.text();
+        console.error(`Failed to enroll user: ${enrollResponse.status} ${errorText}`);
+      }
       
       // Return the result
       return new Response(

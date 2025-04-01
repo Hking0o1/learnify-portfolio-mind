@@ -33,6 +33,10 @@ export const generateModulesWithAI = async (params: ModuleGenerationParams): Pro
       throw new Error(error.message || 'Failed to generate modules');
     }
 
+    if (!data || !data.modules) {
+      throw new Error('No modules returned from generation service');
+    }
+
     console.log("Received AI-generated modules:", data);
     return data;
   } catch (error) {
@@ -46,6 +50,14 @@ export const saveGeneratedModules = async (courseId: string, generatedModules: G
   try {
     console.log("Starting to save generated modules for courseId:", courseId);
     const savedModules = [];
+
+    if (!courseId) {
+      throw new Error('Course ID is required to save modules');
+    }
+
+    if (!generatedModules || !Array.isArray(generatedModules) || generatedModules.length === 0) {
+      throw new Error('No valid modules to save');
+    }
 
     // Save each module and its materials
     for (const moduleData of generatedModules) {
@@ -73,7 +85,7 @@ export const saveGeneratedModules = async (courseId: string, generatedModules: G
       // Create materials for this module
       if (moduleData.materials && moduleData.materials.length > 0) {
         const materialsToInsert = moduleData.materials.map((material, index) => ({
-          title: material.title, // Title is required
+          title: material.title, 
           type: material.type || 'document',
           content: material.content,
           position: index,

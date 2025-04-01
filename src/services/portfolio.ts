@@ -22,7 +22,7 @@ export interface GrowthOpportunity {
 }
 
 export interface Certification {
-  id: number;
+  id: string;
   name: string;
   issuer: string;
   date: string;
@@ -30,7 +30,7 @@ export interface Certification {
 }
 
 export interface Recommendation {
-  id: number;
+  id: string;
   title: string;
   description: string;
   match: number;
@@ -53,182 +53,199 @@ export interface Assessment {
 export const portfolioAPI = {
   // Get user skills portfolio
   getUserSkills: async (userId: string) => {
-    // In a real application, this would fetch from the database
-    // For demo purposes, returning mock data
-    return {
-      skillGroups: [
-        {
-          name: "Technical Skills",
-          skills: [
-            { name: "Machine Learning", level: 78 },
-            { name: "Data Analysis", level: 85 },
-            { name: "Python", level: 92 },
-            { name: "SQL", level: 70 },
-            { name: "Statistical Modeling", level: 65 },
-          ],
-        },
-        {
-          name: "Business Skills",
-          skills: [
-            { name: "Portfolio Management", level: 68 },
-            { name: "Risk Assessment", level: 72 },
-            { name: "Financial Analysis", level: 65 },
-            { name: "Strategic Planning", level: 60 },
-          ],
-        },
-        {
-          name: "Soft Skills",
-          skills: [
-            { name: "Communication", level: 88 },
-            { name: "Problem Solving", level: 82 },
-            { name: "Teamwork", level: 75 },
-            { name: "Leadership", level: 68 },
-          ],
-        },
-      ],
-      learningProgress: [
-        { name: "Jan", progress: 25 },
-        { name: "Feb", progress: 30 },
-        { name: "Mar", progress: 35 },
-        { name: "Apr", progress: 40 },
-        { name: "May", progress: 48 },
-        { name: "Jun", progress: 52 },
-        { name: "Jul", progress: 60 },
-        { name: "Aug", progress: 65 },
-        { name: "Sep", progress: 68 },
-      ],
-      skillDistribution: [
-        { name: "Technical", value: 45 },
-        { name: "Business", value: 30 },
-        { name: "Soft Skills", value: 25 },
-      ]
-    };
+    try {
+      const { data: userSkills, error } = await supabase
+        .from('user_skills')
+        .select(`
+          skill_groups (
+            id,
+            name,
+            skills (
+              id,
+              name,
+              level,
+              category
+            )
+          ),
+          learning_progress (
+            month,
+            progress
+          ),
+          skill_distribution (
+            category,
+            percentage
+          )
+        `)
+        .eq('user_id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching user skills:', error);
+        // Return empty data structure for now
+        return {
+          skillGroups: [],
+          learningProgress: [],
+          skillDistribution: []
+        };
+      }
+      
+      return {
+        skillGroups: userSkills?.skill_groups || [],
+        learningProgress: userSkills?.learning_progress || [],
+        skillDistribution: userSkills?.skill_distribution || []
+      };
+    } catch (error) {
+      console.error('Error in getUserSkills:', error);
+      // Return empty data structure on error
+      return {
+        skillGroups: [],
+        learningProgress: [],
+        skillDistribution: []
+      };
+    }
   },
   
   // Get growth opportunities
   getGrowthOpportunities: async (userId: string) => {
-    // Mock data for demo purposes
-    return [
-      {
-        id: 1,
-        skill: "Advanced ML Algorithms",
-        description: "Expand knowledge in advanced machine learning algorithms and applications",
-        match: 92,
-        courses: 3,
-      },
-      {
-        id: 2,
-        skill: "Risk Management",
-        description: "Develop deeper expertise in financial risk assessment methodologies",
-        match: 87,
-        courses: 2,
-      },
-      {
-        id: 3,
-        skill: "Leadership Development",
-        description: "Enhance team leadership and project management capabilities",
-        match: 81,
-        courses: 4,
-      },
-    ];
+    try {
+      const { data, error } = await supabase
+        .from('growth_opportunities')
+        .select('*')
+        .eq('user_id', userId);
+      
+      if (error) {
+        console.error('Error fetching growth opportunities:', error);
+        return [];
+      }
+      
+      return data || [];
+    } catch (error) {
+      console.error('Error in getGrowthOpportunities:', error);
+      return [];
+    }
   },
   
   // Get user certifications
   getUserCertifications: async (userId: string) => {
-    // Mock data for demo purposes
-    return [
-      {
-        id: 1,
-        name: "Machine Learning Specialist",
-        issuer: "Data Science Academy",
-        date: "June 2023",
-        credentialID: "ML-2023-078",
-      },
-      {
-        id: 2,
-        name: "Financial Portfolio Analysis",
-        issuer: "Finance Institute",
-        date: "February 2023",
-        credentialID: "FPA-2023-124",
-      },
-      {
-        id: 3,
-        name: "Advanced Data Analysis",
-        issuer: "Analytics Association",
-        date: "November 2022",
-        credentialID: "ADA-2022-342",
-      },
-    ];
+    try {
+      const { data, error } = await supabase
+        .from('certifications')
+        .select('*')
+        .eq('user_id', userId);
+      
+      if (error) {
+        console.error('Error fetching certifications:', error);
+        return [];
+      }
+      
+      return data || [];
+    } catch (error) {
+      console.error('Error in getUserCertifications:', error);
+      return [];
+    }
   },
   
   // Export portfolio as PDF/JSON
   exportPortfolio: async (userId: string, format: 'pdf' | 'json') => {
     // In a real application, this would generate and return a file
-    // For demo purposes, simulating the process
-    const portfolioData = {
-      userId,
-      skills: await portfolioAPI.getUserSkills(userId),
-      certifications: await portfolioAPI.getUserCertifications(userId),
-      exportDate: new Date().toISOString(),
-    };
-    
-    // Simulate file creation
-    const filename = `portfolio_${userId}_${new Date().toISOString()}.${format}`;
-    
-    if (format === 'json') {
-      // Create and download JSON file
-      const fileData = JSON.stringify(portfolioData, null, 2);
-      const blob = new Blob([fileData], { type: 'application/json' });
+    // For now, we'll create a simulated file for demonstration
+    try {
+      // Get all user data
+      const [skills, certifications, growth] = await Promise.all([
+        portfolioAPI.getUserSkills(userId),
+        portfolioAPI.getUserCertifications(userId),
+        portfolioAPI.getGrowthOpportunities(userId)
+      ]);
       
-      // Create download link and trigger download
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } else {
-      // In a real application, this would generate a PDF
-      // For demo purposes, just logging
-      console.log(`Exporting PDF: ${filename}`);
-      // Simulate PDF download with a timeout
-      return new Promise(resolve => {
-        setTimeout(() => {
-          const link = document.createElement('a');
-          link.href = '/placeholder.svg'; // Using placeholder for demo
-          link.download = filename.replace('pdf', 'svg');
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          resolve(true);
-        }, 1500);
-      });
+      const portfolioData = {
+        userId,
+        skills,
+        certifications,
+        growthOpportunities: growth,
+        exportDate: new Date().toISOString(),
+      };
+      
+      // Simulate file creation
+      const filename = `portfolio_${userId}_${new Date().toISOString()}.${format}`;
+      
+      if (format === 'json') {
+        // Create and download JSON file
+        const fileData = JSON.stringify(portfolioData, null, 2);
+        const blob = new Blob([fileData], { type: 'application/json' });
+        
+        // Create download link and trigger download
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else {
+        // In a real application, this would generate a PDF
+        // For demo purposes, just logging
+        console.log(`Exporting PDF: ${filename}`);
+        // Simulate PDF download with a timeout
+        return new Promise(resolve => {
+          setTimeout(() => {
+            const link = document.createElement('a');
+            link.href = '/placeholder.svg'; // Using placeholder for demo
+            link.download = filename.replace('pdf', 'svg');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            resolve(true);
+          }, 1500);
+        });
+      }
+      
+      return { success: true, filename };
+    } catch (error) {
+      console.error('Error exporting portfolio:', error);
+      return { success: false, error: error.message };
     }
-    
-    return { success: true, filename };
   },
   
   // Share portfolio via URL or email
   sharePortfolio: async (userId: string, method: 'url' | 'email', recipient?: string) => {
     // In a real application, this would create a shareable link or send an email
-    // For demo purposes, simulating the process
-    const shareableUrl = `https://example.com/shared-portfolio/${userId}?token=${Date.now()}`;
-    
-    if (method === 'url') {
-      // Copy URL to clipboard
-      navigator.clipboard.writeText(shareableUrl)
-        .catch(err => console.error('Could not copy URL: ', err));
+    try {
+      // Generate a unique token for sharing
+      const { data: shareData, error } = await supabase
+        .from('portfolio_shares')
+        .insert([
+          { user_id: userId, recipient_email: recipient, method }
+        ])
+        .select('token')
+        .single();
       
-      return { success: true, url: shareableUrl };
-    } else if (method === 'email' && recipient) {
-      // In a real application, this would send an email with the URL
-      console.log(`Sharing portfolio with ${recipient} via email: ${shareableUrl}`);
-      return { success: true, recipient, url: shareableUrl };
+      if (error) throw error;
+      
+      const shareableUrl = `${window.location.origin}/shared-portfolio/${shareData.token}`;
+      
+      if (method === 'url') {
+        // Copy URL to clipboard
+        navigator.clipboard.writeText(shareableUrl)
+          .catch(err => console.error('Could not copy URL: ', err));
+        
+        return { success: true, url: shareableUrl };
+      } else if (method === 'email' && recipient) {
+        // In a real application, this would send an email with the URL
+        const { error: emailError } = await supabase.functions.invoke('send-email', {
+          body: { recipient, subject: 'Portfolio Shared With You', url: shareableUrl }
+        });
+        
+        if (emailError) throw emailError;
+        
+        return { success: true, recipient, url: shareableUrl };
+      }
+      
+      return { success: false, error: 'Invalid share method or missing recipient' };
+    } catch (error) {
+      console.error('Error sharing portfolio:', error);
+      return { success: false, error: error.message };
     }
-    
-    return { success: false, error: 'Invalid share method or missing recipient' };
   },
   
   // Start skill assessment
@@ -255,24 +272,32 @@ export const portfolioAPI = {
       
       console.log("Received personalized assessment:", data);
       
-      const assessment = data.assessment || {
-        id: `assess_${Date.now()}`,
-        title: "Comprehensive Skills Assessment",
-        description: "This assessment will evaluate your current skills and identify growth opportunities.",
-        redirectUrl: `/assessment/${Date.now()}`
-      };
+      // Create assessment entry in database
+      const { data: assessmentData, error: createError } = await supabase
+        .from('assessments')
+        .insert([{
+          user_id: userId,
+          title: data.assessment?.title || 'Comprehensive Skills Assessment',
+          description: data.assessment?.description || 'Evaluate your current skills',
+          status: 'created'
+        }])
+        .select()
+        .single();
+        
+      if (createError) throw createError;
       
       return {
         success: true,
-        assessmentId: assessment.id,
-        redirectUrl: `/assessment/${assessment.id}`,
-        title: assessment.title,
-        description: assessment.description,
-        estimatedDuration: assessment.estimatedDuration,
-        focusAreas: assessment.focusAreas
+        assessmentId: assessmentData.id,
+        redirectUrl: `/assessment/${assessmentData.id}`,
+        title: assessmentData.title,
+        description: assessmentData.description,
+        estimatedDuration: data.assessment?.estimatedDuration || '15-20 minutes',
+        focusAreas: data.assessment?.focusAreas || []
       };
     } catch (error) {
       console.error("Error in startAssessment:", error);
+      // Return minimal fallback data
       return {
         success: false,
         error: "Failed to create assessment session",
@@ -287,75 +312,56 @@ export const portfolioAPI = {
     try {
       console.log("Getting personalized recommendations for user:", userId);
       
-      // Get user skills for personalization
-      const userSkillsData = await portfolioAPI.getUserSkills(userId);
+      // Get recommendations from database
+      const { data: recommendations, error } = await supabase
+        .from('recommendations')
+        .select('*')
+        .eq('user_id', userId);
+        
+      if (error) throw error;
       
-      // Call the edge function to get personalized recommendations
-      const { data, error } = await supabase.functions.invoke('personalized-portfolio', {
-        body: { 
-          userId, 
-          requestType: 'recommendations',
-          userSkills: userSkillsData
+      // If no recommendations exist, create them
+      if (!recommendations || recommendations.length === 0) {
+        // Get user skills for personalization
+        const userSkillsData = await portfolioAPI.getUserSkills(userId);
+        
+        // Call the edge function to get personalized recommendations
+        const { data, error: funcError } = await supabase.functions.invoke('personalized-portfolio', {
+          body: { 
+            userId, 
+            requestType: 'recommendations',
+            userSkills: userSkillsData
+          }
+        });
+        
+        if (funcError) throw funcError;
+        
+        // Save recommendations to database
+        if (data.recommendations && data.recommendations.length > 0) {
+          const recsToInsert = data.recommendations.map((rec: any) => ({
+            user_id: userId,
+            title: rec.title,
+            description: rec.description,
+            match: rec.match,
+            type: rec.type
+          }));
+          
+          const { data: insertedRecs, error: insertError } = await supabase
+            .from('recommendations')
+            .insert(recsToInsert)
+            .select();
+            
+          if (insertError) throw insertError;
+          
+          return insertedRecs;
         }
-      });
-      
-      if (error) {
-        console.error("Error getting personalized recommendations:", error);
-        throw error;
       }
       
-      console.log("Received personalized recommendations:", data);
-      
-      // Return the recommendations from the edge function or fall back to defaults
-      return data.recommendations || [
-        {
-          id: 1,
-          title: "Advanced Machine Learning Course",
-          description: "Deep dive into neural networks and reinforcement learning",
-          match: 95,
-          type: "course"
-        },
-        {
-          id: 2,
-          title: "Financial Risk Management Certification",
-          description: "Industry-recognized certification for risk professionals",
-          match: 87,
-          type: "certification"
-        },
-        {
-          id: 3,
-          title: "Team Leadership Workshop",
-          description: "Practical skills for leading technical teams",
-          match: 82,
-          type: "workshop"
-        }
-      ];
+      return recommendations || [];
     } catch (error) {
       console.error("Error in getRecommendations:", error);
-      // Return default recommendations if the edge function fails
-      return [
-        {
-          id: 1,
-          title: "Advanced Machine Learning Course",
-          description: "Deep dive into neural networks and reinforcement learning",
-          match: 95,
-          type: "course"
-        },
-        {
-          id: 2,
-          title: "Financial Risk Management Certification",
-          description: "Industry-recognized certification for risk professionals",
-          match: 87,
-          type: "certification"
-        },
-        {
-          id: 3,
-          title: "Team Leadership Workshop",
-          description: "Practical skills for leading technical teams",
-          match: 82,
-          type: "workshop"
-        }
-      ];
+      // Return empty array on error
+      return [];
     }
   }
 };
