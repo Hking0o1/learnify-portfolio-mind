@@ -1,1 +1,35 @@
+
 project_id = "ffzeuvrgxqdtniizkzmq"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "auth", "extensions"]
+
+[db]
+port = 54322
+
+[studio]
+port = 54323
+
+[inbucket]
+enabled = false
+
+[storage]
+enabled = true
+
+[auth]
+enabled = true
+
+[edge-functions]
+[edge-functions.generate-module]
+verify_jwt = true
+
+[edge-functions.personalized-course]
+verify_jwt = true
+
+[edge-functions.personalized-portfolio]
+verify_jwt = true
+
+[edge-functions.generate-roadmap]
+verify_jwt = true

@@ -9,6 +9,81 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      assessments: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          status: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      certifications: {
+        Row: {
+          created_at: string | null
+          credential_id: string
+          date: string
+          description: string | null
+          expiry_date: string | null
+          id: string
+          image: string | null
+          issue_date: string | null
+          issuer: string
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          credential_id: string
+          date: string
+          description?: string | null
+          expiry_date?: string | null
+          id?: string
+          image?: string | null
+          issue_date?: string | null
+          issuer: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          credential_id?: string
+          date?: string
+          description?: string | null
+          expiry_date?: string | null
+          id?: string
+          image?: string | null
+          issue_date?: string | null
+          issuer?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       courses: {
         Row: {
           created_at: string | null
@@ -50,6 +125,74 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      growth_opportunities: {
+        Row: {
+          courses: number | null
+          created_at: string | null
+          description: string
+          id: string
+          match: number
+          skill: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          courses?: number | null
+          created_at?: string | null
+          description: string
+          id?: string
+          match?: number
+          skill: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          courses?: number | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          match?: number
+          skill?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      learning_progress: {
+        Row: {
+          created_at: string | null
+          id: string
+          month: string
+          progress: number
+          updated_at: string | null
+          user_skills_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          month: string
+          progress?: number
+          updated_at?: string | null
+          user_skills_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          month?: string
+          progress?: number
+          updated_at?: string | null
+          user_skills_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_progress_user_skills_id_fkey"
+            columns: ["user_skills_id"]
+            isOneToOne: false
+            referencedRelation: "user_skills"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       materials: {
         Row: {
@@ -130,6 +273,69 @@ export type Database = {
           },
         ]
       }
+      portfolio_shares: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          method: string
+          recipient_email: string | null
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          method: string
+          recipient_email?: string | null
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          method?: string
+          recipient_email?: string | null
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      recommendations: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          match: number
+          title: string
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          match?: number
+          title: string
+          type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          match?: number
+          title?: string
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       review_replies: {
         Row: {
           created_at: string | null
@@ -203,6 +409,111 @@ export type Database = {
           },
         ]
       }
+      skill_distribution: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          percentage: number
+          updated_at: string | null
+          user_skills_id: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          percentage: number
+          updated_at?: string | null
+          user_skills_id?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          percentage?: number
+          updated_at?: string | null
+          user_skills_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skill_distribution_user_skills_id_fkey"
+            columns: ["user_skills_id"]
+            isOneToOne: false
+            referencedRelation: "user_skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skill_groups: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          user_skills_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          user_skills_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+          user_skills_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skill_groups_user_skills_id_fkey"
+            columns: ["user_skills_id"]
+            isOneToOne: false
+            referencedRelation: "user_skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skills: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          id: string
+          level: number
+          name: string
+          skill_group_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          level?: number
+          name: string
+          skill_group_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          level?: number
+          name?: string
+          skill_group_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skills_skill_group_id_fkey"
+            columns: ["skill_group_id"]
+            isOneToOne: false
+            referencedRelation: "skill_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_progress: {
         Row: {
           course_id: string
@@ -254,6 +565,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_roadmap: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          progress: number | null
+          steps: Json
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          progress?: number | null
+          steps?: Json
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          progress?: number | null
+          steps?: Json
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_skills: {
+        Row: {
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

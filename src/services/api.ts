@@ -14,5 +14,7 @@ export {
   type GrowthOpportunity,
   type Certification,
   type Recommendation,
-  type Assessment
+  type Assessment,
+  type Roadmap,
+  type RoadmapStep
 } from './portfolio';

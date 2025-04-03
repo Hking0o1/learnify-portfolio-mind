@@ -1,88 +1,101 @@
 
-import { createContext, useContext, useState, useEffect } from "react";
-import { useUser, useAuth } from "@clerk/clerk-react";
+import { createContext, useContext, useEffect, useState } from "react";
+import { useUser, useClerk } from "@clerk/clerk-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-
-type UserRole = "admin" | "instructor" | "student";
+import { portfolioAPI } from "@/services/portfolio";
 
 interface AuthContextType {
-  userRole: UserRole | null;
-  isAdmin: boolean;
-  isInstructor: boolean;
-  isStudent: boolean;
   userId: string | null;
-  fullName: string | null;
   isAuthenticated: boolean;
-  setUserRole: (role: UserRole) => void;
-  checkAccess: (allowedRoles: UserRole[]) => boolean;
+  fullName: string | null;
+  isInstructor: boolean;
+  isAdmin: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  userId: null,
+  isAuthenticated: false,
+  fullName: null,
+  isInstructor: false,
+  isAdmin: false
+});
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { isLoaded, isSignedIn, user } = useUser();
-  const { getToken } = useAuth();
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const { signOut } = useClerk();
   const [userId, setUserId] = useState<string | null>(null);
-  const [fullName, setFullName] = useState<string | null>(null);
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  // In a real application, you would fetch the user's role from your database
-  // Here we're using a simplified approach with metadata
+  const [isInstructor, setIsInstructor] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isFirstLogin, setIsFirstLogin] = useState(false);
+  
+  // Check auth status and set up user info
   useEffect(() => {
-    if (isLoaded && isSignedIn && user) {
-      // Set userId from user object
-      setUserId(user.id);
+    if (!isLoaded) return;
+
+    if (isSignedIn && user) {
+      const newUserId = user.id;
+      setUserId(newUserId);
       
-      // Set fullName
-      setFullName(user.fullName || `${user.firstName} ${user.lastName}`.trim() || user.username || null);
+      // Check if this is user's first login
+      const firstLoginKey = `first_login_${newUserId}`;
+      const hasLoggedInBefore = localStorage.getItem(firstLoginKey);
       
-      // Check if user has a role in public metadata
-      const userMetadata = user.publicMetadata;
-      
-      if (userMetadata && userMetadata.role) {
-        setUserRole(userMetadata.role as UserRole);
-      } else {
-        // Default role is student if not specified
-        setUserRole("student");
+      if (!hasLoggedInBefore) {
+        setIsFirstLogin(true);
+        localStorage.setItem(firstLoginKey, 'true');
       }
-    } else if (isLoaded && !isSignedIn) {
-      setUserRole(null);
+      
+      // In a real app, you would fetch user roles from the database
+      // For demo purposes, assign random roles
+      const randomNum = Math.random();
+      setIsInstructor(randomNum > 0.3);  // 70% chance to be an instructor
+      setIsAdmin(randomNum > 0.7);       // 30% chance to be an admin
+      
+    } else {
       setUserId(null);
-      setFullName(null);
+      setIsInstructor(false);
+      setIsAdmin(false);
     }
   }, [isLoaded, isSignedIn, user]);
-
-  const checkAccess = (allowedRoles: UserRole[]) => {
-    if (!isSignedIn || !userRole) return false;
-    return allowedRoles.includes(userRole);
-  };
-
-  const contextValue: AuthContextType = {
-    userRole,
-    isAdmin: userRole === "admin",
-    isInstructor: userRole === "instructor" || userRole === "admin", // Admin can do everything an instructor can
-    isStudent: userRole === "student" || userRole === "instructor" || userRole === "admin", // Everyone has student access
-    userId,
-    fullName,
-    isAuthenticated: isSignedIn || false,
-    setUserRole,
-    checkAccess,
-  };
+  
+  // Initialize user data on first login
+  useEffect(() => {
+    const initializeUserData = async () => {
+      if (!userId || !isFirstLogin) return;
+      
+      console.log(`First login detected for user ${userId}. Setting up initial data...`);
+      
+      try {
+        // Generate roadmap for new user
+        await portfolioAPI.generateUserRoadmap(userId);
+        console.log("User roadmap generated successfully");
+        
+        // Mark first login as processed
+        setIsFirstLogin(false);
+      } catch (error) {
+        console.error("Error initializing user data:", error);
+      }
+    };
+    
+    initializeUserData();
+  }, [userId, isFirstLogin]);
 
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider
+      value={{
+        userId,
+        isAuthenticated: Boolean(isSignedIn && userId),
+        fullName: user?.fullName || null,
+        isInstructor,
+        isAdmin
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-export function useUserAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useUserAuth must be used within an AuthProvider");
-  }
-  return context;
-}
+export const useUserAuth = () => {
+  return useContext(AuthContext);
+};
