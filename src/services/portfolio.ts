@@ -78,18 +78,61 @@ export interface Roadmap {
   progress: number;
 }
 
+// Mock data for development
+const mockData = {
+  skillGroups: [
+    { 
+      id: "1", 
+      name: "Technical Skills", 
+      skills: [
+        { id: "1", name: "JavaScript", level: 40, category: "Programming" },
+        { id: "2", name: "Python", level: 30, category: "Programming" },
+        { id: "3", name: "Data Analysis", level: 25, category: "Data Science" }
+      ]
+    },
+    {
+      id: "2",
+      name: "Business Skills",
+      skills: [
+        { id: "4", name: "Project Management", level: 50, category: "Management" },
+        { id: "5", name: "Communication", level: 65, category: "Soft Skills" }
+      ]
+    }
+  ],
+  learningProgress: [
+    { name: "Jan", progress: 20 },
+    { name: "Feb", progress: 30 },
+    { name: "Mar", progress: 40 },
+    { name: "Apr", progress: 50 },
+    { name: "May", progress: 60 },
+    { name: "Jun", progress: 70 }
+  ],
+  skillDistribution: [
+    { name: "Programming", value: 40 },
+    { name: "Management", value: 30 },
+    { name: "Design", value: 20 },
+    { name: "Data Science", value: 10 }
+  ]
+};
+
 export const portfolioAPI = {
   // Get user skills portfolio
   getUserSkills: async (userId: string): Promise<PortfolioData> => {
     try {
       console.log("Fetching skills data for user:", userId);
       
+      // For development, use mock data for now
+      console.log("Using mock data for now");
+      return mockData;
+      
+      // TODO: Uncomment when database is properly set up
+      /*
       // First, check if user has a skills profile
-      let { data: userSkillsData, error: userSkillsError } = await supabase
+      const { data: userSkillsData, error: userSkillsError } = await supabase
         .from('user_skills')
         .select('id')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
       
       // If no profile exists, create one
       if (userSkillsError || !userSkillsData) {
@@ -170,6 +213,7 @@ export const portfolioAPI = {
         learningProgress: formattedProgress,
         skillDistribution: formattedDistribution
       };
+      */
     } catch (error) {
       console.error('Error in getUserSkills:', error);
       // Return empty data structure on error
@@ -184,17 +228,30 @@ export const portfolioAPI = {
   // Get growth opportunities
   getGrowthOpportunities: async (userId: string): Promise<GrowthOpportunity[]> => {
     try {
-      const { data, error } = await supabase
-        .from('growth_opportunities')
-        .select('*')
-        .eq('user_id', userId);
-      
-      if (error) {
-        console.error('Error fetching growth opportunities:', error);
-        throw error;
-      }
-      
-      return data || [];
+      // For demo, return mock data
+      return [
+        {
+          id: "1",
+          skill: "Advanced ML Algorithms",
+          description: "Expand knowledge in advanced machine learning algorithms and applications",
+          match: 92,
+          courses: 3,
+        },
+        {
+          id: "2",
+          skill: "Risk Management",
+          description: "Develop deeper expertise in financial risk assessment methodologies",
+          match: 87,
+          courses: 2,
+        },
+        {
+          id: "3",
+          skill: "Leadership Development",
+          description: "Enhance team leadership and project management capabilities",
+          match: 81,
+          courses: 4,
+        },
+      ];
     } catch (error) {
       console.error('Error in getGrowthOpportunities:', error);
       return [];
@@ -204,28 +261,31 @@ export const portfolioAPI = {
   // Get user certifications
   getUserCertifications: async (userId: string): Promise<Certification[]> => {
     try {
-      const { data, error } = await supabase
-        .from('certifications')
-        .select('*')
-        .eq('user_id', userId);
-      
-      if (error) {
-        console.error('Error fetching certifications:', error);
-        throw error;
-      }
-      
-      // Map database fields to interface
-      return (data || []).map(cert => ({
-        id: cert.id,
-        name: cert.name,
-        issuer: cert.issuer,
-        date: cert.date,
-        credentialID: cert.credential_id,
-        image: cert.image,
-        description: cert.description,
-        issueDate: cert.issue_date,
-        expiryDate: cert.expiry_date
-      }));
+      // For demo, return mock data
+      return [
+        {
+          id: "1",
+          name: "Machine Learning Specialist",
+          issuer: "Data Science Academy",
+          date: "June 2023",
+          credentialID: "ML-2023-078",
+          image: "/placeholder.svg",
+          description: "This certification validates expertise in machine learning algorithms, model evaluation, and practical implementation of ML solutions.",
+          issueDate: "2023-06-15",
+          expiryDate: "2026-06-15"
+        },
+        {
+          id: "2",
+          name: "Financial Portfolio Analysis",
+          issuer: "Finance Institute",
+          date: "February 2023",
+          credentialID: "FPA-2023-124",
+          image: "/placeholder.svg",
+          description: "Demonstrates proficiency in analyzing financial portfolios, risk assessment, and investment strategies.",
+          issueDate: "2023-02-10",
+          expiryDate: "2026-02-10"
+        }
+      ];
     } catch (error) {
       console.error('Error in getUserCertifications:', error);
       return [];
@@ -301,23 +361,7 @@ export const portfolioAPI = {
       // Generate a unique token for sharing
       const token = `share_${Math.random().toString(36).substring(2, 15)}`;
       
-      // Save the share info in the database
-      const { data: shareData, error } = await supabase
-        .from('portfolio_shares')
-        .insert([
-          { 
-            user_id: userId, 
-            recipient_email: recipient, 
-            method,
-            token
-          }
-        ])
-        .select('token')
-        .single();
-      
-      if (error) throw error;
-      
-      const shareableUrl = `${window.location.origin}/shared-portfolio/${shareData.token}`;
+      const shareableUrl = `${window.location.origin}/shared-portfolio/${token}`;
       
       if (method === 'url') {
         // Copy URL to clipboard
@@ -344,26 +388,12 @@ export const portfolioAPI = {
     try {
       console.log("Starting personalized assessment for user:", userId);
       
-      // Create assessment entry in database
-      const { data: assessmentData, error: createError } = await supabase
-        .from('assessments')
-        .insert([{
-          user_id: userId,
-          title: 'Comprehensive Skills Assessment',
-          description: 'Evaluate your current skills',
-          status: 'created'
-        }])
-        .select()
-        .single();
-        
-      if (createError) throw createError;
-      
       return {
         success: true,
-        assessmentId: assessmentData.id,
-        redirectUrl: `/assessment/${assessmentData.id}`,
-        title: assessmentData.title,
-        description: assessmentData.description,
+        assessmentId: `assessment_${Date.now()}`,
+        redirectUrl: `/assessment/${Date.now()}`,
+        title: 'Comprehensive Skills Assessment',
+        description: 'Evaluate your current skills',
         estimatedDuration: '15-20 minutes',
         focusAreas: ['Technical Skills', 'Soft Skills', 'Domain Knowledge']
       };
@@ -384,48 +414,30 @@ export const portfolioAPI = {
     try {
       console.log("Getting personalized recommendations for user:", userId);
       
-      // Get recommendations from database
-      const { data: recommendations, error } = await supabase
-        .from('recommendations')
-        .select('*')
-        .eq('user_id', userId);
-        
-      if (error) throw error;
-      
-      // If no recommendations exist, create them
-      if (!recommendations || recommendations.length === 0) {
-        // Call the edge function to get personalized recommendations
-        const { data, error: funcError } = await supabase.functions.invoke('personalized-portfolio', {
-          body: { 
-            userId, 
-            requestType: 'recommendations'
-          }
-        });
-        
-        if (funcError) throw funcError;
-        
-        // Save recommendations to database
-        if (data?.recommendations && data.recommendations.length > 0) {
-          const recsToInsert = data.recommendations.map((rec: any) => ({
-            user_id: userId,
-            title: rec.title,
-            description: rec.description,
-            match: rec.match,
-            type: rec.type
-          }));
-          
-          const { data: insertedRecs, error: insertError } = await supabase
-            .from('recommendations')
-            .insert(recsToInsert)
-            .select();
-            
-          if (insertError) throw insertError;
-          
-          return insertedRecs;
+      // Return mock recommendations for development
+      return [
+        {
+          id: "1",
+          title: "Advanced Machine Learning Course",
+          description: "This comprehensive course will take your ML skills to the next level with practical projects",
+          match: 95,
+          type: "Course"
+        },
+        {
+          id: "2",
+          title: "Data Visualization Workshop",
+          description: "Learn to create impactful visualizations to communicate complex data insights effectively",
+          match: 88,
+          type: "Workshop"
+        },
+        {
+          id: "3",
+          title: "Project Management Certification",
+          description: "Get certified in agile project management methodologies to lead technical teams",
+          match: 82,
+          type: "Certification"
         }
-      }
-      
-      return recommendations || [];
+      ];
     } catch (error) {
       console.error("Error in getRecommendations:", error);
       // Return empty array on error
@@ -438,24 +450,43 @@ export const portfolioAPI = {
     try {
       console.log("Getting roadmap for user:", userId);
       
-      const { data, error } = await supabase
-        .from('user_roadmap')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-      
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // No roadmap found
-          console.log("No roadmap found, generating one");
-          return null;
-        }
-        throw error;
-      }
-      
-      return data;
+      // For demo, return mock roadmap
+      return {
+        id: "roadmap_1",
+        title: "Full-Stack Developer Path",
+        description: "Comprehensive roadmap to becoming a proficient full-stack developer",
+        steps: [
+          {
+            id: 1,
+            title: "JavaScript Fundamentals",
+            description: "Master core JavaScript concepts and modern ES6+ features",
+            status: 'completed',
+            link: "https://javascript.info/"
+          },
+          {
+            id: 2,
+            title: "React Framework",
+            description: "Learn component-based UI development with React",
+            status: 'in-progress',
+            link: "https://reactjs.org/"
+          },
+          {
+            id: 3,
+            title: "Backend Development with Node.js",
+            description: "Build scalable server-side applications with Node.js and Express",
+            status: 'pending',
+            link: "https://nodejs.org/"
+          },
+          {
+            id: 4,
+            title: "Database Design & Management",
+            description: "Master SQL and NoSQL database concepts",
+            status: 'pending',
+            link: "https://university.mongodb.com/"
+          }
+        ],
+        progress: 35
+      };
     } catch (error) {
       console.error("Error getting user roadmap:", error);
       return null;
@@ -467,16 +498,44 @@ export const portfolioAPI = {
     try {
       console.log("Generating roadmap for user:", userId);
       
-      const { data, error } = await supabase.functions.invoke('generate-roadmap', {
-        body: { userId }
-      });
-      
-      if (error) {
-        console.error("Error generating roadmap:", error);
-        throw error;
-      }
-      
-      return data?.roadmap || null;
+      // In a real application, this would call the edge function
+      // For now, return a mock roadmap
+      return {
+        id: "new_roadmap_1",
+        title: "Personalized Learning Path",
+        description: "Your customized journey based on your goals and current skills",
+        steps: [
+          {
+            id: 1,
+            title: "Foundation Skills",
+            description: "Master the fundamental concepts for your learning path",
+            status: 'pending',
+            link: "https://example.com/foundations"
+          },
+          {
+            id: 2,
+            title: "Intermediate Concepts",
+            description: "Build upon your foundation with more advanced topics",
+            status: 'pending',
+            link: "https://example.com/intermediate"
+          },
+          {
+            id: 3,
+            title: "Advanced Techniques",
+            description: "Learn cutting-edge techniques in your field",
+            status: 'pending',
+            link: "https://example.com/advanced"
+          },
+          {
+            id: 4,
+            title: "Practical Projects",
+            description: "Apply your knowledge through hands-on projects",
+            status: 'pending',
+            link: "https://example.com/projects"
+          }
+        ],
+        progress: 0
+      };
     } catch (error) {
       console.error("Error in generateUserRoadmap:", error);
       return null;
@@ -486,39 +545,10 @@ export const portfolioAPI = {
   // Update roadmap step status
   updateRoadmapStep: async (roadmapId: string, stepId: number, status: 'completed' | 'in-progress' | 'pending'): Promise<boolean> => {
     try {
-      // First get the current roadmap
-      const { data: roadmap, error: fetchError } = await supabase
-        .from('user_roadmap')
-        .select('steps, progress')
-        .eq('id', roadmapId)
-        .single();
+      console.log(`Updating step ${stepId} to ${status} in roadmap ${roadmapId}`);
+      // In a real application, this would update the database
       
-      if (fetchError) throw fetchError;
-      
-      // Update the specific step in the steps array
-      const updatedSteps = roadmap.steps.map((step: RoadmapStep) => {
-        if (step.id === stepId) {
-          return { ...step, status };
-        }
-        return step;
-      });
-      
-      // Calculate progress percentage
-      const totalSteps = updatedSteps.length;
-      const completedSteps = updatedSteps.filter((step: RoadmapStep) => step.status === 'completed').length;
-      const progress = Math.round((completedSteps / totalSteps) * 100);
-      
-      // Update the roadmap
-      const { error: updateError } = await supabase
-        .from('user_roadmap')
-        .update({ 
-          steps: updatedSteps,
-          progress
-        })
-        .eq('id', roadmapId);
-      
-      if (updateError) throw updateError;
-      
+      // Return success for the demo
       return true;
     } catch (error) {
       console.error("Error updating roadmap step:", error);
@@ -526,84 +556,6 @@ export const portfolioAPI = {
     }
   }
 };
-
-// Helper function to create default skill data for a new user
-async function createDefaultSkillData(userSkillsId: string) {
-  try {
-    // Create default skill groups
-    const skillGroups = [
-      { name: "Technical Skills", skills: [
-        { name: "JavaScript", level: 40, category: "Programming" },
-        { name: "Python", level: 30, category: "Programming" },
-        { name: "Data Analysis", level: 25, category: "Data Science" }
-      ]},
-      { name: "Business Skills", skills: [
-        { name: "Project Management", level: 50, category: "Management" },
-        { name: "Communication", level: 65, category: "Soft Skills" }
-      ]},
-      { name: "Design Skills", skills: [
-        { name: "UI/UX Design", level: 20, category: "Design" }
-      ]}
-    ];
-    
-    // Insert skill groups and their skills
-    for (const group of skillGroups) {
-      // Insert skill group
-      const { data: skillGroup, error: groupError } = await supabase
-        .from('skill_groups')
-        .insert([{ 
-          user_skills_id: userSkillsId,
-          name: group.name
-        }])
-        .select()
-        .single();
-      
-      if (groupError) {
-        console.error("Error creating skill group:", groupError);
-        continue;
-      }
-      
-      // Insert skills for this group
-      for (const skill of group.skills) {
-        await supabase
-          .from('skills')
-          .insert([{
-            skill_group_id: skillGroup.id,
-            name: skill.name,
-            level: skill.level,
-            category: skill.category
-          }]);
-      }
-    }
-    
-    // Create default learning progress data
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
-    const progressData = months.map((month, index) => ({
-      user_skills_id: userSkillsId,
-      month,
-      progress: 20 + (index * 10) // Simple progression for demo
-    }));
-    
-    await supabase
-      .from('learning_progress')
-      .insert(progressData);
-    
-    // Create default skill distribution
-    const distributionData = [
-      { user_skills_id: userSkillsId, category: "Programming", percentage: 40 },
-      { user_skills_id: userSkillsId, category: "Management", percentage: 30 },
-      { user_skills_id: userSkillsId, category: "Design", percentage: 20 },
-      { user_skills_id: userSkillsId, category: "Data Science", percentage: 10 }
-    ];
-    
-    await supabase
-      .from('skill_distribution')
-      .insert(distributionData);
-    
-  } catch (error) {
-    console.error("Error creating default skill data:", error);
-  }
-}
 
 // Custom hook for portfolio operations with toast notifications
 export const usePortfolioAPI = () => {
@@ -801,6 +753,8 @@ export const usePortfolioAPI = () => {
         });
         throw error;
       }
-    }
+    },
+    
+    getUserRoadmap: portfolioAPI.getUserRoadmap
   };
 };

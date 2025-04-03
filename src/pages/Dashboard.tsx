@@ -11,11 +11,16 @@ import { type UserProgress, progressAPI, useProgressAPI } from "@/services/api";
 import { motion } from "framer-motion";
 import { LearningRoadmap } from "@/components/dashboard/LearningRoadmap";
 
+// Update UserProgress interface if needed
+interface EnhancedUserProgress extends UserProgress {
+  title?: string;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { isAuthenticated, userId, fullName } = useUserAuth();
   const { getUserProgress } = useProgressAPI();
-  const [userProgress, setUserProgress] = useState<UserProgress[]>([]);
+  const [userProgress, setUserProgress] = useState<EnhancedUserProgress[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,7 +31,12 @@ const Dashboard = () => {
     const fetchUserProgress = async () => {
       try {
         const progress = await getUserProgress(userId);
-        setUserProgress(progress || []);
+        // Add title property if it doesn't exist
+        const enhancedProgress = progress.map(item => ({
+          ...item,
+          title: item.title || `Course ${item.course_id?.substring(0, 5) || 'Unknown'}`
+        }));
+        setUserProgress(enhancedProgress || []);
       } catch (error) {
         console.error("Error fetching user progress:", error);
       } finally {

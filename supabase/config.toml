@@ -21,15 +21,15 @@ enabled = true
 [auth]
 enabled = true
 
-[edge-functions]
-[edge-functions.generate-module]
+[functions]
+[functions.generate-module]
 verify_jwt = true
 
-[edge-functions.personalized-course]
+[functions.personalized-course]
 verify_jwt = true
 
-[edge-functions.personalized-portfolio]
+[functions.personalized-portfolio]
 verify_jwt = true
 
-[edge-functions.generate-roadmap]
+[functions.generate-roadmap]
 verify_jwt = true

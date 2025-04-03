@@ -11,6 +11,8 @@ interface AuthContextType {
   fullName: string | null;
   isInstructor: boolean;
   isAdmin: boolean;
+  userRole: string;
+  checkAccess: (allowedRoles?: string[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -18,7 +20,9 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   fullName: null,
   isInstructor: false,
-  isAdmin: false
+  isAdmin: false,
+  userRole: 'user',
+  checkAccess: () => false
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -27,6 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userId, setUserId] = useState<string | null>(null);
   const [isInstructor, setIsInstructor] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState('user');
   const [isFirstLogin, setIsFirstLogin] = useState(false);
   
   // Check auth status and set up user info
@@ -49,13 +54,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // In a real app, you would fetch user roles from the database
       // For demo purposes, assign random roles
       const randomNum = Math.random();
-      setIsInstructor(randomNum > 0.3);  // 70% chance to be an instructor
-      setIsAdmin(randomNum > 0.7);       // 30% chance to be an admin
+      const isInstr = randomNum > 0.3;  // 70% chance to be an instructor
+      const isAdm = randomNum > 0.7;    // 30% chance to be an admin
+      
+      setIsInstructor(isInstr);
+      setIsAdmin(isAdm);
+      
+      if (isAdm) {
+        setUserRole('admin');
+      } else if (isInstr) {
+        setUserRole('instructor');
+      } else {
+        setUserRole('user');
+      }
       
     } else {
       setUserId(null);
       setIsInstructor(false);
       setIsAdmin(false);
+      setUserRole('user');
     }
   }, [isLoaded, isSignedIn, user]);
   
@@ -81,6 +98,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     initializeUserData();
   }, [userId, isFirstLogin]);
 
+  // Function to check if user has required role
+  const checkAccess = (allowedRoles?: string[]) => {
+    if (!isAuthenticated) return false;
+    if (!allowedRoles) return true;
+    
+    if (isAdmin) return true; // Admin has access to everything
+    if (allowedRoles.includes(userRole)) return true;
+    
+    return false;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -88,7 +116,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isAuthenticated: Boolean(isSignedIn && userId),
         fullName: user?.fullName || null,
         isInstructor,
-        isAdmin
+        isAdmin,
+        userRole,
+        checkAccess
       }}
     >
       {children}
