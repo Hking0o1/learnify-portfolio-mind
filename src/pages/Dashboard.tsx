@@ -34,7 +34,7 @@ const Dashboard = () => {
         // Add title property if it doesn't exist
         const enhancedProgress = progress.map(item => ({
           ...item,
-          title: item.title || `Course ${item.course_id?.substring(0, 5) || 'Unknown'}`
+          title: `Course ${item.course_id?.substring(0, 5) || 'Unknown'}`
         }));
         setUserProgress(enhancedProgress || []);
       } catch (error) {

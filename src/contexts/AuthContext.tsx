@@ -100,7 +100,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Function to check if user has required role
   const checkAccess = (allowedRoles?: string[]) => {
-    if (!isAuthenticated) return false;
+    if (!isSignedIn) return false;
     if (!allowedRoles) return true;
     
     if (isAdmin) return true; // Admin has access to everything
