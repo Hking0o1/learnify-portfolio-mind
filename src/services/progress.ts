@@ -10,7 +10,7 @@ export interface UserProgress {
   last_module_id: string;
   last_material_id: string;
   last_accessed: string;
-  course_title?: string; // Add this to match the EnhancedUserProgress interface in Dashboard.tsx
+  course_title?: string;
 }
 
 export const progressAPI = {
@@ -84,6 +84,31 @@ export const progressAPI = {
       ...data,
       course_title: data.courses?.title
     };
+  },
+  
+  // Get the most recent course progress for resuming learning
+  getRecentProgress: async (userId: string): Promise<UserProgress | null> => {
+    const { data, error } = await supabase
+      .from('user_progress')
+      .select(`
+        *,
+        courses:course_id (
+          title
+        )
+      `)
+      .eq('user_id', userId)
+      .order('last_accessed', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (error) throw error;
+    
+    if (!data) return null;
+    
+    return {
+      ...data,
+      course_title: data.courses?.title
+    };
   }
 };
 
@@ -143,6 +168,36 @@ export const useProgressAPI = () => {
         toast({
           title: "Error",
           description: "Failed to start tracking your progress for this course",
+          variant: "destructive",
+        });
+        return null;
+      }
+    },
+    
+    // Resume learning with toast notifications
+    resumeLearningWithToast: async (userId: string): Promise<UserProgress | null> => {
+      try {
+        const result = await progressAPI.getRecentProgress(userId);
+        if (!result) {
+          toast({
+            title: "No courses found",
+            description: "You haven't started any courses yet",
+            variant: "destructive",
+          });
+          return null;
+        }
+        
+        toast({
+          title: "Resuming course",
+          description: `Continuing with ${result.course_title || 'your course'}`,
+        });
+        
+        return result;
+      } catch (error) {
+        console.error("Error resuming learning:", error);
+        toast({
+          title: "Error",
+          description: "Failed to resume your learning",
           variant: "destructive",
         });
         return null;
