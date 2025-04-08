@@ -48,6 +48,7 @@ export const ProtectedRoute = ({
   }
 
   if (!isSignedIn) {
+    // Store the current location they were trying to go to
     return <Navigate to="/sign-in" state={{ from: location }} replace />;
   }
 

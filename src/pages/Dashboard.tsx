@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +10,6 @@ import { type UserProgress, progressAPI, useProgressAPI } from "@/services/api";
 import { motion } from "framer-motion";
 import { LearningRoadmap } from "@/components/dashboard/LearningRoadmap";
 
-// Update UserProgress interface if needed
 interface EnhancedUserProgress extends UserProgress {
   title?: string;
 }
@@ -31,7 +29,6 @@ const Dashboard = () => {
     const fetchUserProgress = async () => {
       try {
         const progress = await getUserProgress(userId);
-        // Add title property if it doesn't exist
         const enhancedProgress = progress.map(item => ({
           ...item,
           title: `Course ${item.course_id?.substring(0, 5) || 'Unknown'}`
@@ -51,7 +48,6 @@ const Dashboard = () => {
   const completedCourses = userProgress.filter(course => course.progress_percentage === 100).length;
   const coursesInProgress = userProgress.filter(course => course.progress_percentage > 0 && course.progress_percentage < 100).length;
 
-  // Animation variants
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -194,7 +190,7 @@ const Dashboard = () => {
                     >
                       <div className="flex justify-between">
                         <span className="font-medium truncate" style={{ maxWidth: '70%' }}>
-                          {course.title || "Course Title"}
+                          {course.course_title || 'Untitled Course'}
                         </span>
                         <span className="text-sm text-muted-foreground">
                           {course.progress_percentage}%

@@ -4,6 +4,7 @@ import { useUser, useClerk } from "@clerk/clerk-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { portfolioAPI } from "@/services/portfolio";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthContextType {
   userId: string | null;
@@ -13,6 +14,7 @@ interface AuthContextType {
   isAdmin: boolean;
   userRole: string;
   checkAccess: (allowedRoles?: string[]) => boolean;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -22,12 +24,15 @@ const AuthContext = createContext<AuthContextType>({
   isInstructor: false,
   isAdmin: false,
   userRole: 'user',
-  checkAccess: () => false
+  checkAccess: () => false,
+  logout: async () => {}
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { isLoaded, isSignedIn, user } = useUser();
   const { signOut } = useClerk();
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
   const [isInstructor, setIsInstructor] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -92,11 +97,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setIsFirstLogin(false);
       } catch (error) {
         console.error("Error initializing user data:", error);
+        toast({
+          title: "Setup Error",
+          description: "Could not initialize your account data. Please try refreshing the page.",
+          variant: "destructive"
+        });
       }
     };
     
     initializeUserData();
-  }, [userId, isFirstLogin]);
+  }, [userId, isFirstLogin, toast]);
 
   // Function to check if user has required role
   const checkAccess = (allowedRoles?: string[]) => {
@@ -109,6 +119,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return false;
   };
 
+  // Safe logout function
+  const logout = async () => {
+    try {
+      // First, sign out from Clerk
+      await signOut();
+      
+      // Then, sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      // Clear any sensitive data from localStorage
+      // Only clear our app data, not everything
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('first_login_') || key.includes('user_data')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Navigate to home page
+      navigate('/');
+      
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+    } catch (error) {
+      console.error("Error during logout:", error);
+      toast({
+        title: "Logout Error",
+        description: "Something went wrong during logout. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -118,7 +163,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isInstructor,
         isAdmin,
         userRole,
-        checkAccess
+        checkAccess,
+        logout
       }}
     >
       {children}
