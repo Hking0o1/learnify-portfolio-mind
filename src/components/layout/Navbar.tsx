@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -29,7 +28,6 @@ import {
 import { useTheme } from "@/hooks/use-theme";
 import useMobile from "@/hooks/use-mobile";
 
-// ModeToggle component
 export function ModeToggle() {
   const { theme, setTheme } = useTheme();
 
@@ -76,7 +74,6 @@ export function Navbar() {
   };
 
   const handleSignOut = () => {
-    // Additional sign out logic if needed
     navigate("/");
   };
 
@@ -119,12 +116,10 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background">
       <div className="container flex h-16 items-center justify-between">
-        {/* Logo */}
         <NavLink to="/" className="flex items-center space-x-2">
-          <span className="font-bold text-xl">EduLMS</span>
+          <span className="font-bold text-xl">Pragati</span>
         </NavLink>
 
-        {/* Desktop Navigation */}
         <div className="hidden md:flex md:items-center md:space-x-4">
           <NavigationMenu>
             <NavigationMenuList>
@@ -218,7 +213,6 @@ export function Navbar() {
           )}
         </div>
 
-        {/* Mobile Navigation */}
         <div className="md:hidden flex items-center">
           <ModeToggle />
           <Sheet>
@@ -236,7 +230,7 @@ export function Navbar() {
                     className="flex items-center space-x-2 mb-6"
                     onClick={closeMenu}
                   >
-                    <span className="font-bold text-xl">EduLMS</span>
+                    <span className="font-bold text-xl">Pragati</span>
                   </NavLink>
                   <nav className="flex flex-col space-y-4">
                     <NavLink

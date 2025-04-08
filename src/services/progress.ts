@@ -3,120 +3,87 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export interface UserProgress {
-  id?: string;
+  id: string;
   user_id: string;
   course_id: string;
-  last_module_id?: string;
-  last_material_id?: string;
   progress_percentage: number;
+  last_module_id: string;
+  last_material_id: string;
   last_accessed: string;
+  course_title?: string; // Add this to match the EnhancedUserProgress interface in Dashboard.tsx
 }
 
 export const progressAPI = {
-  // Get user progress for all courses
-  getUserProgress: async (userId: string) => {
+  // Get progress for a specific user
+  getUserProgress: async (userId: string): Promise<UserProgress[]> => {
     const { data, error } = await supabase
       .from('user_progress')
-      .select('*')
-      .eq('user_id', userId)
-      .order('last_accessed', { ascending: false });
+      .select(`
+        *,
+        courses:course_id (
+          title
+        )
+      `)
+      .eq('user_id', userId);
     
     if (error) throw error;
-    return data;
+    
+    // Transform the data to include course_title from the joined table
+    return data.map(item => ({
+      ...item,
+      course_title: item.courses?.title
+    }));
   },
   
-  // Get user progress for a specific course
-  getCourseProgress: async (userId: string, courseId: string) => {
+  // Update progress for a user on a specific course
+  updateProgress: async (progressData: Partial<UserProgress>): Promise<UserProgress> => {
+    if (!progressData.id) {
+      throw new Error('Progress ID is required for updating');
+    }
+    
     const { data, error } = await supabase
       .from('user_progress')
-      .select('*')
+      .update(progressData)
+      .eq('id', progressData.id)
+      .select();
+    
+    if (error) throw error;
+    return data[0];
+  },
+  
+  // Create new progress entry
+  createProgress: async (progressData: Omit<UserProgress, 'id'>): Promise<UserProgress> => {
+    const { data, error } = await supabase
+      .from('user_progress')
+      .insert([progressData])
+      .select();
+    
+    if (error) throw error;
+    return data[0];
+  },
+  
+  // Get a specific progress entry
+  getProgressForCourse: async (userId: string, courseId: string): Promise<UserProgress | null> => {
+    const { data, error } = await supabase
+      .from('user_progress')
+      .select(`
+        *,
+        courses:course_id (
+          title
+        )
+      `)
       .eq('user_id', userId)
       .eq('course_id', courseId)
-      .single();
-    
-    if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "No rows returned"
-    return data;
-  },
-  
-  // Resume learning (get the last accessed module/material)
-  resumeLearning: async (userId: string) => {
-    try {
-      // Get the most recently accessed course
-      const { data, error } = await supabase
-        .from('user_progress')
-        .select(`
-          id,
-          user_id,
-          course_id,
-          last_module_id,
-          last_material_id,
-          progress_percentage,
-          last_accessed,
-          courses:course_id(title)
-        `)
-        .eq('user_id', userId)
-        .order('last_accessed', { ascending: false })
-        .limit(1)
-        .single();
-        
-      if (error) throw error;
-      
-      // For demo purposes, if no data exists, return a mock course
-      if (!data) {
-        return {
-          course_id: "1",
-          course_title: "Machine Learning Fundamentals",
-          module_id: "1",
-          material_id: "1"
-        };
-      }
-      
-      return {
-        course_id: data.course_id,
-        course_title: data.courses?.title || "Course",
-        module_id: data.last_module_id,
-        material_id: data.last_material_id
-      };
-    } catch (error) {
-      console.error('Error resuming learning:', error);
-      // Return a fallback course for demo purposes
-      return {
-        course_id: "1",
-        course_title: "Machine Learning Fundamentals",
-        module_id: "1",
-        material_id: "1"
-      };
-    }
-  },
-  
-  // Update user progress
-  updateProgress: async (progressData: UserProgress) => {
-    const { data, error } = await supabase
-      .from('user_progress')
-      .upsert(progressData)
-      .select();
+      .maybeSingle(); // Use maybeSingle instead of single to handle case where no record exists
     
     if (error) throw error;
-    return data[0];
-  },
-
-  // Enroll user in a course
-  enrollInCourse: async (userId: string, courseId: string) => {
-    // Create initial progress record for the course
-    const progressData: UserProgress = {
-      user_id: userId,
-      course_id: courseId,
-      progress_percentage: 0,
-      last_accessed: new Date().toISOString()
+    
+    if (!data) return null;
+    
+    return {
+      ...data,
+      course_title: data.courses?.title
     };
-
-    const { data, error } = await supabase
-      .from('user_progress')
-      .upsert(progressData)
-      .select();
-
-    if (error) throw error;
-    return data[0];
   }
 };
 
@@ -127,40 +94,58 @@ export const useProgressAPI = () => {
   return {
     ...progressAPI,
     
-    // Resume learning with toast
-    resumeLearningWithToast: async (userId: string) => {
+    // Get progress with toast on error
+    getUserProgress: async (userId: string): Promise<UserProgress[]> => {
       try {
-        const result = await progressAPI.resumeLearning(userId);
-        return result;
+        return await progressAPI.getUserProgress(userId);
       } catch (error) {
-        console.error("Error resuming learning:", error);
+        console.error("Error fetching user progress:", error);
         toast({
           title: "Error",
-          description: "Failed to resume learning",
+          description: "Failed to fetch your learning progress",
           variant: "destructive",
         });
-        throw error;
+        return [];
       }
     },
-
-    // Enroll in course with toast
-    enrollInCourseWithToast: async (userId: string, courseId: string) => {
+    
+    // Update progress with toast notifications
+    updateProgressWithToast: async (progressData: Partial<UserProgress>): Promise<UserProgress | null> => {
       try {
-        const result = await progressAPI.enrollInCourse(userId, courseId);
+        const result = await progressAPI.updateProgress(progressData);
         toast({
-          title: "Success",
-          description: "Successfully enrolled in the course",
-          variant: "default",
+          title: "Progress Updated",
+          description: "Your learning progress has been updated",
         });
         return result;
       } catch (error) {
-        console.error("Error enrolling in course:", error);
+        console.error("Error updating progress:", error);
         toast({
           title: "Error",
-          description: "Failed to enroll in the course",
+          description: "Failed to update your learning progress",
           variant: "destructive",
         });
-        throw error;
+        return null;
+      }
+    },
+    
+    // Create progress with toast notifications
+    createProgressWithToast: async (progressData: Omit<UserProgress, 'id'>): Promise<UserProgress | null> => {
+      try {
+        const result = await progressAPI.createProgress(progressData);
+        toast({
+          title: "Progress Started",
+          description: "You've started a new course",
+        });
+        return result;
+      } catch (error) {
+        console.error("Error creating progress:", error);
+        toast({
+          title: "Error",
+          description: "Failed to start tracking your progress for this course",
+          variant: "destructive",
+        });
+        return null;
       }
     }
   };

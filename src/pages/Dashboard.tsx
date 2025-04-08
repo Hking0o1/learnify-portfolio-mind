@@ -193,7 +193,7 @@ const Dashboard = () => {
                     >
                       <div className="flex justify-between">
                         <span className="font-medium truncate" style={{ maxWidth: '70%' }}>
-                          {course.title || 'Untitled Course'}
+                          {course.course_title || course.title || 'Untitled Course'}
                         </span>
                         <span className="text-sm text-muted-foreground">
                           {course.progress_percentage}%
