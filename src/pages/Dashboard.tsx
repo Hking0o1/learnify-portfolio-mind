@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import { LearningRoadmap } from "@/components/dashboard/LearningRoadmap";
 
 interface EnhancedUserProgress extends UserProgress {
   title?: string;
+  course_title?: string; // Add this property to the interface
 }
 
 const Dashboard = () => {
@@ -31,7 +33,8 @@ const Dashboard = () => {
         const progress = await getUserProgress(userId);
         const enhancedProgress = progress.map(item => ({
           ...item,
-          title: `Course ${item.course_id?.substring(0, 5) || 'Unknown'}`
+          title: `Course ${item.course_id?.substring(0, 5) || 'Unknown'}`,
+          course_title: item.course_title || 'Untitled Course'
         }));
         setUserProgress(enhancedProgress || []);
       } catch (error) {
@@ -190,7 +193,7 @@ const Dashboard = () => {
                     >
                       <div className="flex justify-between">
                         <span className="font-medium truncate" style={{ maxWidth: '70%' }}>
-                          {course.course_title || 'Untitled Course'}
+                          {course.title || 'Untitled Course'}
                         </span>
                         <span className="text-sm text-muted-foreground">
                           {course.progress_percentage}%
