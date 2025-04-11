@@ -50,12 +50,17 @@ export const moduleAPI = {
   
   // Create a new module
   createModule: async (moduleData: Module) => {
+    console.log("Creating module with data:", moduleData);
     const { data, error } = await supabase
       .from('modules')
       .insert([moduleData])
       .select();
     
-    if (error) throw error;
+    if (error) {
+      console.error("Error creating module:", error);
+      throw error;
+    }
+    console.log("Module created successfully:", data);
     return data[0];
   },
   
@@ -139,6 +144,7 @@ export const useModuleAPI = () => {
     // Create module with toast
     createModuleWithToast: async (moduleData: Module) => {
       try {
+        console.log("Attempting to create module with:", moduleData);
         const result = await moduleAPI.createModule(moduleData);
         toast({
           title: "Module created",

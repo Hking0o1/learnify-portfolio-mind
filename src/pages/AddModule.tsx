@@ -13,20 +13,26 @@ import AIModuleGenerator from "@/components/course/AIModuleGenerator";
 import { courseAPI } from "@/services/api";
 
 const AddModule = () => {
-  const { courseId } = useParams();
+  const { courseId } = useParams<{courseId: string}>();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isInstructor } = useUserAuth();
   const [activeTab, setActiveTab] = useState("manual");
-  const [courseData, setCourseData] = useState(null);
+  const [courseData, setCourseData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     const fetchCourseData = async () => {
-      if (!courseId) return;
+      if (!courseId) {
+        console.error("No course ID provided");
+        setIsLoading(false);
+        return;
+      }
       
       try {
+        console.log("Fetching course data for ID:", courseId);
         const course = await courseAPI.getCourse(courseId);
+        console.log("Course data fetched:", course);
         setCourseData(course);
       } catch (error) {
         console.error("Error fetching course:", error);
@@ -63,6 +69,28 @@ const AddModule = () => {
               <CardTitle>Access Denied</CardTitle>
               <CardDescription>
                 You don't have permission to add modules.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => navigate("/dashboard")}>
+                Return to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!courseId) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-[60vh]">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Error</CardTitle>
+              <CardDescription>
+                No course ID was provided.
               </CardDescription>
             </CardHeader>
             <CardContent>

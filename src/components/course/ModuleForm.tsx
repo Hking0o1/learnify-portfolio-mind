@@ -44,11 +44,14 @@ export const ModuleForm = ({ courseId, existingModule, onSuccess }: ModuleFormPr
     setIsSubmitting(true);
     
     try {
+      console.log("Submitting form data:", formData);
       let result;
       if (isEditing && existingModule?.id) {
         result = await moduleAPI.updateModuleWithToast(existingModule.id, formData);
       } else {
-        result = await moduleAPI.createModuleWithToast(formData as Module);
+        // Ensure we're passing a complete Module object for creation
+        const moduleData = formData as Module;
+        result = await moduleAPI.createModuleWithToast(moduleData);
       }
       
       if (result && onSuccess) {
@@ -87,7 +90,7 @@ export const ModuleForm = ({ courseId, existingModule, onSuccess }: ModuleFormPr
             <Textarea
               id="description"
               name="description"
-              value={formData.description}
+              value={formData.description || ''}
               onChange={handleInputChange}
               placeholder="Module description"
               rows={3}
@@ -100,7 +103,7 @@ export const ModuleForm = ({ courseId, existingModule, onSuccess }: ModuleFormPr
               id="position"
               name="position"
               type="number"
-              value={formData.position}
+              value={formData.position || 0}
               onChange={handleNumberChange}
               min={0}
             />
@@ -115,17 +118,22 @@ export const ModuleForm = ({ courseId, existingModule, onSuccess }: ModuleFormPr
             type="button" 
             variant="outline" 
             onClick={() => navigate(`/courses/${courseId}`)}
-            icon={<XIcon />}
           >
+            <XIcon className="mr-2 h-4 w-4" />
             Cancel
           </Button>
           <Button 
             type="submit" 
-            isLoading={isSubmitting}
-            loadingText={isEditing ? "Updating..." : "Creating..."}
-            icon={<SaveIcon />}
+            disabled={isSubmitting}
           >
-            {isEditing ? 'Update Module' : 'Create Module'}
+            {isSubmitting ? (
+              <>Loading...</>
+            ) : (
+              <>
+                <SaveIcon className="mr-2 h-4 w-4" />
+                {isEditing ? 'Update Module' : 'Create Module'}
+              </>
+            )}
           </Button>
         </CardFooter>
       </form>
